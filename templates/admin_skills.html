@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Manage Skills{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-stats">
+            <h2 class="mb-3">
+                <i class="fas fa-tools me-2"></i>Manage Skills
+            </h2>
+            <p class="mb-0">Review and approve skills submitted by users.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Skills Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>All Skills
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if skills %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Skill Name</th>
+                                    <th>Type</th>
+                                    <th>User</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for skill in skills %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ skill.skill_name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if skill.skill_type == 'offered' else 'warning' }}">
+                                            {{ skill.skill_type.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>{{ skill.user_name }}</small><br>
+                                        <small class="text-muted">{{ skill.email }}</small>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ skill.description or 'No description' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if skill.is_approved %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if skill.is_approved %}
+                                            <a href="{{ url_for('reject_skill', skill_id=skill.id) }}" 
+                                               class="btn btn-sm btn-outline-warning admin-action-btn"
+                                               data-action="reject" data-target="skill">
+                                                <i class="fas fa-times me-1"></i>Reject
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('approve_skill', skill_id=skill.id) }}" 
+                                               class="btn btn-sm btn-outline-success admin-action-btn"
+                                               data-action="approve" data-target="skill">
+                                                <i class="fas fa-check me-1"></i>Approve
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-tools fa-3x mb-3"></i>
+                        <p>No skills found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_users') }}" class="btn btn-info w-100">
+                            <i class="fas fa-users me-2"></i>Manage Users
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_messages') }}" class="btn btn-success w-100">
+                            <i class="fas fa-bullhorn me-2"></i>Send Messages
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" onclick="approveAllPending()">
+                            <i class="fas fa-check-double me-2"></i>Approve All Pending
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function approveAllPending() {
+    if (confirm('Are you sure you want to approve all pending skills? This action cannot be undone.')) {
+        // TODO: Implement bulk approve functionality
+        alert('Bulk approve functionality will be implemented here');
+    }
+}
+
+// Admin action confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const adminActionButtons = document.querySelectorAll('.admin-action-btn');
+    adminActionButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const action = this.dataset.action;
+            const target = this.dataset.target;
+            if (!confirm(`Are you sure you want to ${action} this ${target}?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

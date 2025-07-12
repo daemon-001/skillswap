@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Manage Messages{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-stats">
+            <h2 class="mb-3">
+                <i class="fas fa-bullhorn me-2"></i>Manage Messages
+            </h2>
+            <p class="mb-0">Send announcements and manage platform messages.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Send New Message -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-paper-plane me-2"></i>Send New Message
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('send_message') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">Message Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="content" class="form-label">Message Content</label>
+                            <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Messages List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>All Messages
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Content</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for message in messages %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ message.title }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if message.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {% if message.created_at %}
+                                                {{ message.created_at.strftime('%B %d, %Y') }}
+                                            {% else %}
+                                                Unknown
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if message.is_active %}
+                                            <a href="{{ url_for('toggle_message', message_id=message.id) }}" 
+                                               class="btn btn-sm btn-outline-warning admin-action-btn"
+                                               data-action="deactivate" data-target="message">
+                                                <i class="fas fa-eye-slash me-1"></i>Deactivate
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('toggle_message', message_id=message.id) }}" 
+                                               class="btn btn-sm btn-outline-success admin-action-btn"
+                                               data-action="activate" data-target="message">
+                                                <i class="fas fa-eye me-1"></i>Activate
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-bullhorn fa-3x mb-3"></i>
+                        <p>No messages found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_users') }}" class="btn btn-info w-100">
+                            <i class="fas fa-users me-2"></i>Manage Users
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_skills') }}" class="btn btn-success w-100">
+                            <i class="fas fa-tools me-2"></i>Manage Skills
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" onclick="sendQuickMessage()">
+                            <i class="fas fa-bolt me-2"></i>Quick Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function sendQuickMessage() {
+    // TODO: Implement quick message functionality
+    alert('Quick message functionality will be implemented here');
+}
+
+// Admin action confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const adminActionButtons = document.querySelectorAll('.admin-action-btn');
+    adminActionButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const action = this.dataset.action;
+            const target = this.dataset.target;
+            if (!confirm(`Are you sure you want to ${action} this ${target}?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

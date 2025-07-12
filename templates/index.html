@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}SkillSwap - Connect, Learn, Grow{% endblock %}
+
+{% block content %}
+<!-- Public Profiles Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <h2 class="fw-bold mb-0">Skill Swap Platform</h2>
+                {% if not session.user_id %}
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">Login</a>
+                {% endif %}
+            </div>
+        </div>
+        <form method="get" class="row mb-4 g-2">
+            <div class="col-auto">
+                <select class="form-select form-control" name="availability">
+                    <option value="">All Availability</option>
+                    {% for avail in availabilities %}
+                        <option value="{{ avail }}" {% if avail == selected_availability %}selected{% endif %}>{{ avail }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" name="q" placeholder="search" value="{{ search_query or '' }}">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="submit">search</button>
+            </div>
+            {% if search_query or selected_availability %}
+            <div class="col-auto">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Clear
+                </a>
+            </div>
+            {% endif %}
+        </form>
+        {% if user_profiles %}
+        <div class="mb-3">
+            <small class="text-muted">
+                {% if search_query or selected_availability %}
+                    Found {{ pagination.total }} profile{{ 's' if pagination.total != 1 else '' }}
+                    {% if search_query %} matching "{{ search_query }}"{% endif %}
+                    {% if selected_availability %} with availability "{{ selected_availability }}"{% endif %}
+                {% else %}
+                    Showing {{ pagination.total }} public profile{{ 's' if pagination.total != 1 else '' }}
+                {% endif %}
+            </small>
+        </div>
+        {% for user in user_profiles %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+                <div class="d-flex align-items-center flex-grow-1">
+                    <div class="me-4">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; overflow: hidden;">
+                            {% if user.profile_photo %}
+                                <img src="{{ url_for('static', filename='uploads/' ~ user.profile_photo) }}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <span class="text-muted">Profile Photo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">{{ user.name }}</h5>
+                        <div class="mb-1">
+                            <span class="text-success small">Skills Offered &rarr;</span>
+                            {% for skill in user.offered_skills %}
+                                <span class="badge bg-light text-dark border me-1">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <span class="text-primary small">Skill wanted &rarr;</span>
+                            {% for skill in user.wanted_skills %}
+                                <span class="badge bg-light text-dark border me-1">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex flex-column align-items-end">
+                    <button class="btn btn-info mb-2 request-btn" {% if not session.user_id %}data-bs-toggle="modal" data-bs-target="#loginPromptModal"{% endif %} {% if not session.user_id %}type="button"{% else %}onclick="window.location.href='{{ url_for('login') if not session.user_id else url_for('search') }}'"{% endif %}>
+                        Request
+                    </button>
+                    <div class="text-muted small">rating {{ user.rating }}/5</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No profiles found</h4>
+            <p class="text-muted">
+                {% if search_query or selected_availability %}
+                    No profiles match your search criteria. Try different keywords or availability filters.
+                {% else %}
+                    No public profiles available at the moment.
+                {% endif %}
+            </p>
+            <div class="mt-3">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Clear Filters
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Profile pages">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagination.prev_num }}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&lt;</a>
+                </li>
+                {% endif %}
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != pagination.page %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">{{ page_num }}</a></li>
+                        {% else %}
+                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagination.next_num }}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&gt;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Login Prompt Modal -->
+<div class="modal fade" id="loginPromptModal" tabindex="-1" aria-labelledby="loginPromptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginPromptModalLabel">Login Required</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        You must be logged in to request a skill swap. Please login or sign up to continue.
+      </div>
+      <div class="modal-footer">
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Sign Up</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero-section text-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="fas fa-exchange-alt me-3"></i>SkillSwap
+                </h1>
+                <p class="lead mb-4">
+                    Connect with people who have skills you need, and share your expertise in return. 
+                    Build meaningful relationships while learning and growing together.
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    {% if not session.user_id %}
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Get Started
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    </a>
+                    <a href="{{ url_for('search') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-search me-2"></i>Find Skills
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold text-gradient mb-3">How It Works</h2>
+                <p class="lead text-muted">
+                    SkillSwap makes it easy to find people with the skills you need and offer your expertise in return.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-search fa-2x"></i>
+                        </div>
+                        <h4 class="card-title">Discover Skills</h4>
+                        <p class="card-text text-muted">
+                            Browse through a diverse community of people offering their skills and expertise. 
+                            Find exactly what you're looking for.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-exchange-alt fa-2x"></i>
+                        </div>
+                        <h4 class="card-title">Request Swaps</h4>
+                        <p class="card-text text-muted">
+                            Send swap requests to people whose skills you need. 
+                            Offer your own expertise in return for a fair exchange.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="bg-warning bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-star fa-2x"></i>
+                        </div>
+                        <h4 class="card-title">Build Relationships</h4>
+                        <p class="card-text text-muted">
+                            Learn from each other, build lasting connections, and grow your network 
+                            through meaningful skill exchanges.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Announcements Section -->
+{% if announcements %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-bullhorn me-2"></i>Latest Updates
+                </h3>
+                {% for announcement in announcements %}
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ announcement.title }}</h5>
+                        <p class="card-text text-muted">{{ announcement.content }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ announcement.created_at.strftime('%B %d, %Y') }}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Call to Action -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-6 fw-bold mb-4">Ready to Start Swapping Skills?</h2>
+                <p class="lead text-muted mb-4">
+                    Join our community today and discover the power of skill sharing. 
+                    Whether you're a beginner or an expert, there's always something to learn and share.
+                </p>
+                {% if not session.user_id %}
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                </div>
+                {% else %}
+                <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Find Skills to Swap
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5 bg-dark text-white">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <h3 class="display-4 fw-bold">100+</h3>
+                    <p>Active Users</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <h3 class="display-4 fw-bold">500+</h3>
+                    <p>Skills Shared</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <h3 class="display-4 fw-bold">200+</h3>
+                    <p>Successful Swaps</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <h3 class="display-4 fw-bold">4.8</h3>
+                    <p>Average Rating</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 
