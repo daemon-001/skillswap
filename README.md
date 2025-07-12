@@ -16,10 +16,7 @@ A modern web application that enables users to exchange skills and knowledge wit
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Admin Features](#-admin-features)
-- [API Endpoints](#-api-endpoints)
-- [Database Schema](#-database-schema)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Contributors](#-contribution)
 
 ## ✨ Features
 
@@ -184,113 +181,6 @@ Download comprehensive CSV reports:
 - **Feedback Logs Report**: Detailed rating and feedback data
 - **Swap Statistics Report**: Complete swap information with outcomes
 
-## 🔌 API Endpoints
-
-### Authentication
-- `GET /` - Home page
-- `GET /register` - Registration page
-- `POST /register` - User registration
-- `GET /login` - Login page
-- `POST /login` - User login
-- `GET /logout` - User logout
-
-### User Management
-- `GET /dashboard` - User dashboard
-- `GET /profile` - Profile page
-- `POST /update_profile` - Update profile
-- `GET /view_profile/<user_id>` - View other user's profile
-
-### Skill Management
-- `POST /add_skill` - Add new skill
-- `GET /search` - Search for skills/users
-
-### Swap Management
-- `GET /request_swap/<skill_id>` - Request swap page
-- `POST /send_swap_request` - Send swap request
-- `GET /respond_swap/<request_id>/<action>` - Respond to request
-- `GET /cancel_swap/<request_id>` - Cancel swap request
-
-### Rating System
-- `GET /rate_swap/<request_id>` - Rate swap page
-- `POST /submit_rating` - Submit rating and feedback
-
-### Admin Routes
-- `GET /admin` - Admin dashboard
-- `GET /admin/users` - User management
-- `GET /admin/skills` - Skill management
-- `GET /admin/messages` - Message management
-- `GET /admin/download/user_activity` - Download user activity report
-- `GET /admin/download/feedback_logs` - Download feedback report
-- `GET /admin/download/swap_stats` - Download swap statistics report
-
-## 🗄️ Database Schema
-
-### Users Table
-```sql
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    name TEXT NOT NULL,
-    location TEXT,
-    profile_photo TEXT,
-    availability TEXT,
-    bio TEXT,
-    is_public INTEGER DEFAULT 1,
-    is_admin INTEGER DEFAULT 0,
-    is_banned INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Skills Table
-```sql
-CREATE TABLE skills (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    skill_name TEXT NOT NULL,
-    skill_type TEXT NOT NULL, -- 'offered' or 'wanted'
-    description TEXT,
-    is_approved INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id)
-);
-```
-
-### Swap Requests Table
-```sql
-CREATE TABLE swap_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    requester_id INTEGER,
-    provider_id INTEGER,
-    offered_skill_id INTEGER,
-    wanted_skill_id INTEGER,
-    status TEXT DEFAULT 'pending', -- 'pending', 'accepted', 'rejected', 'cancelled'
-    message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (requester_id) REFERENCES users (id),
-    FOREIGN KEY (provider_id) REFERENCES users (id),
-    FOREIGN KEY (offered_skill_id) REFERENCES skills (id),
-    FOREIGN KEY (wanted_skill_id) REFERENCES skills (id)
-);
-```
-
-### Ratings Table
-```sql
-CREATE TABLE ratings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    swap_request_id INTEGER,
-    rater_id INTEGER,
-    rated_id INTEGER,
-    rating INTEGER CHECK(rating >= 1 AND rating <= 5),
-    feedback TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (swap_request_id) REFERENCES swap_requests (id),
-    FOREIGN KEY (rater_id) REFERENCES users (id),
-    FOREIGN KEY (rated_id) REFERENCES users (id)
-);
-```
-
 ## 🛠️ Technical Stack
 
 - **Backend**: Flask (Python web framework)
@@ -341,47 +231,13 @@ skillswap/
 - **Admin Access Control**: Role-based access control
 - **SQL Injection Prevention**: Parameterized queries
 
-## 🚀 Deployment
 
-### Development
-```bash
-python skill_swap_app.py
-```
+## 🤝 Contributors
 
-### Production
-For production deployment, consider:
-- Using a production WSGI server (Gunicorn, uWSGI)
-- Setting up a proper database (PostgreSQL, MySQL)
-- Configuring environment variables
-- Setting up HTTPS
-- Using a reverse proxy (Nginx)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Flask community for the excellent web framework
-- Bootstrap team for the responsive CSS framework
-- Font Awesome for the beautiful icons
-- All contributors and users of SkillSwap
-
-## 📞 Support
-
-If you have any questions or need support:
-- Create an issue on GitHub
-- Contact the development team
-- Check the documentation
+1. Gaurav Kumar Gupta (gauravkrguptagkg@gmail.com)
+2. Rahul Prasad (rahul.3057.12@gmail.com)
+3. Rohan Oraon (rohanoraon808484@gmail.com)
+4. Nitesh Kumar (nitesh.kumar4work@gmail.com)
 
 ---
 
-**Made with ❤️ for the skill-sharing community** 
