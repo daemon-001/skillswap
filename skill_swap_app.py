@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
 import os
 from datetime import datetime
 import json
+import csv
+import io
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
@@ -66,12 +68,20 @@ def init_db():
             location TEXT,
             profile_photo TEXT,
             availability TEXT,
+            bio TEXT,
             is_public INTEGER DEFAULT 1,
             is_admin INTEGER DEFAULT 0,
             is_banned INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Add bio column if it doesn't exist (for existing databases)
+    try:
+        cursor.execute('ALTER TABLE users ADD COLUMN bio TEXT')
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
     
     # Skills table
     cursor.execute('''
@@ -222,9 +232,10 @@ def index():
     # Build user query with filters
     user_query = '''SELECT * FROM users WHERE is_public = 1 AND is_banned = 0 AND is_admin = 0'''
     params = []
-    if availability:
-        user_query += ' AND availability = ?'
-        params.append(availability)
+    if availability == 'available':
+        user_query += ' AND availability IS NOT NULL AND availability != ""'
+    elif availability == 'unavailable':
+        user_query += ' AND (availability IS NULL OR availability = "")'
     if q:
         user_query += ' AND (name LIKE ? OR id IN (SELECT user_id FROM skills WHERE skill_name LIKE ?))'
         params.append(f'%{q}%')
@@ -240,9 +251,10 @@ def index():
     # Get total count for pagination
     count_query = '''SELECT COUNT(*) as count FROM users WHERE is_public = 1 AND is_banned = 0 AND is_admin = 0'''
     count_params = []
-    if availability:
-        count_query += ' AND availability = ?'
-        count_params.append(availability)
+    if availability == 'available':
+        count_query += ' AND availability IS NOT NULL AND availability != ""'
+    elif availability == 'unavailable':
+        count_query += ' AND (availability IS NULL OR availability = "")'
     if q:
         count_query += ' AND (name LIKE ? OR id IN (SELECT user_id FROM skills WHERE skill_name LIKE ?))'
         count_params.append(f'%{q}%')
@@ -260,24 +272,33 @@ def index():
         user_id = user['id']
         offered_skills = conn.execute('''SELECT skill_name FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1''', (user_id,)).fetchall()
         wanted_skills = conn.execute('''SELECT skill_name FROM skills WHERE user_id = ? AND skill_type = 'wanted' AND is_approved = 1''', (user_id,)).fetchall()
-        avg_rating = conn.execute('''SELECT AVG(rating) as avg_rating FROM ratings WHERE rated_id = ?''', (user_id,)).fetchone()['avg_rating']
-        rating = round(avg_rating, 1) if avg_rating else 0
+        rating_data = conn.execute('''SELECT AVG(rating) as avg_rating, COUNT(*) as total_ratings FROM ratings WHERE rated_id = ?''', (user_id,)).fetchone()
+        avg_rating = rating_data['avg_rating']
+        total_ratings = rating_data['total_ratings']
+        
+        # Determine rating display
+        if total_ratings > 0:
+            rating_display = f"{round(avg_rating, 1)}/5"
+            has_rating = True
+        else:
+            rating_display = "Unrated"
+            has_rating = False
+            
         user_profiles.append({
             'id': user['id'],
             'name': user['name'],
             'profile_photo': user['profile_photo'],
             'offered_skills': [s['skill_name'] for s in offered_skills],
             'wanted_skills': [s['skill_name'] for s in wanted_skills],
-            'rating': rating,
-            'availability': user['availability']
+            'rating': rating_display,
+            'has_rating': has_rating,
+            'avg_rating': avg_rating,
+            'total_ratings': total_ratings,
+            'availability': user['availability'],
+            'bio': user['bio']
         })
-    # Get all unique availability values for dropdown
-    avail_query = 'SELECT DISTINCT availability FROM users WHERE is_public = 1 AND is_banned = 0 AND is_admin = 0 AND availability IS NOT NULL AND availability != ""'
-    avail_params = []
-    if 'user_id' in session:
-        avail_query += ' AND id != ?'
-        avail_params.append(session['user_id'])
-    availabilities = [row['availability'] for row in conn.execute(avail_query, avail_params).fetchall()]
+    # Define availability options for dropdown
+    availabilities = ['available', 'unavailable']
     conn.close()
 
     # Convert datetime strings to datetime objects
@@ -491,11 +512,90 @@ def profile():
         'wanted_skills': len(wanted_skills),
         'completed_swaps': completed_swaps,
         'avg_rating': avg_rating['avg_rating'] or 0,
-        'total_ratings': avg_rating['total_ratings'] or 0
+        'total_ratings': avg_rating['total_ratings'] or 0,
+        'has_rating': avg_rating['total_ratings'] > 0
     }
     
     return render_template('profile.html', user=user, offered_skills=offered_skills, 
                          wanted_skills=wanted_skills, stats=stats)
+
+@app.route('/view_profile/<int:user_id>')
+def view_profile(user_id):
+    conn = get_db()
+    
+    # Get the user profile
+    user = conn.execute('SELECT * FROM users WHERE id = ? AND is_public = 1 AND is_banned = 0', (user_id,)).fetchone()
+    
+    if not user:
+        flash('Profile not found or not available.', 'error')
+        return redirect(url_for('index'))
+    
+    # Get user's approved skills
+    offered_skills = conn.execute('''
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1
+    ''', (user_id,)).fetchall()
+    
+    wanted_skills = conn.execute('''
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'wanted' AND is_approved = 1
+    ''', (user_id,)).fetchall()
+    
+    # Get user stats
+    completed_swaps = conn.execute('''
+        SELECT COUNT(*) as count FROM swap_requests 
+        WHERE (requester_id = ? OR provider_id = ?) AND status = 'accepted'
+    ''', (user_id, user_id)).fetchone()['count']
+    
+    # Get average rating
+    avg_rating = conn.execute('''
+        SELECT AVG(rating) as avg_rating, COUNT(*) as total_ratings
+        FROM ratings WHERE rated_id = ?
+    ''', (user_id,)).fetchone()
+    
+    # Get recent reviews (last 5)
+    recent_reviews = conn.execute('''
+        SELECT r.*, u.name as reviewer_name
+        FROM ratings r
+        JOIN users u ON r.rater_id = u.id
+        WHERE r.rated_id = ?
+        ORDER BY r.created_at DESC
+        LIMIT 5
+    ''', (user_id,)).fetchall()
+    
+    # Check if current user can request from this user
+    can_request = False
+    if 'user_id' in session and session['user_id'] != user_id:
+        # Check if user has any approved offered skills
+        user_offered_skills = conn.execute('''
+            SELECT COUNT(*) as count FROM skills 
+            WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1
+        ''', (session['user_id'],)).fetchone()['count']
+        can_request = user_offered_skills > 0
+    
+    conn.close()
+    
+    # Convert datetime strings to datetime objects
+    user = convert_row_datetimes(user)
+    offered_skills = convert_rows_datetimes(offered_skills)
+    wanted_skills = convert_rows_datetimes(wanted_skills)
+    recent_reviews = convert_rows_datetimes(recent_reviews)
+    
+    # Calculate stats
+    stats = {
+        'offered_skills': len(offered_skills),
+        'wanted_skills': len(wanted_skills),
+        'completed_swaps': completed_swaps,
+        'avg_rating': avg_rating['avg_rating'] or 0,
+        'total_ratings': avg_rating['total_ratings'] or 0,
+        'has_rating': avg_rating['total_ratings'] > 0
+    }
+    
+    return render_template('view_profile.html', 
+                         user=user, 
+                         offered_skills=offered_skills, 
+                         wanted_skills=wanted_skills, 
+                         stats=stats,
+                         recent_reviews=recent_reviews,
+                         can_request=can_request)
 
 @app.route('/update_profile', methods=['POST'])
 @login_required
@@ -503,8 +603,20 @@ def update_profile():
     try:
         name = request.form.get('name', '')
         location = request.form.get('location', '')
-        availability = request.form.get('availability', '')
+        bio = request.form.get('bio', '')
         is_public = 1 if request.form.get('is_public') == 'on' else 0
+        
+        # Handle availability switch and details
+        is_available = request.form.get('is_available') == 'on'
+        availability_details = request.form.get('availability_details', '')
+        
+        # Set availability based on switch and details
+        if is_available and availability_details:
+            availability = availability_details
+        elif is_available:
+            availability = "Available for skill swaps"
+        else:
+            availability = ""
         
         if not name:
             flash('Name is required.', 'error')
@@ -536,14 +648,14 @@ def update_profile():
         # Update user profile
         if profile_photo:
             conn.execute('''
-                UPDATE users SET name = ?, location = ?, availability = ?, is_public = ?, profile_photo = ?
+                UPDATE users SET name = ?, location = ?, availability = ?, bio = ?, is_public = ?, profile_photo = ?
                 WHERE id = ?
-            ''', (name, location, availability, is_public, profile_photo, session['user_id']))
+            ''', (name, location, availability, bio, is_public, profile_photo, session['user_id']))
         else:
             conn.execute('''
-                UPDATE users SET name = ?, location = ?, availability = ?, is_public = ?
+                UPDATE users SET name = ?, location = ?, availability = ?, bio = ?, is_public = ?
                 WHERE id = ?
-            ''', (name, location, availability, is_public, session['user_id']))
+            ''', (name, location, availability, bio, is_public, session['user_id']))
         
         conn.commit()
         conn.close()
@@ -1015,6 +1127,247 @@ def toggle_message(message_id):
     status = 'activated' if new_status else 'deactivated'
     flash(f'Message {status} successfully!', 'success')
     return redirect(url_for('admin_messages'))
+
+# Report generation functions
+def generate_user_activity_report():
+    """Generate CSV report of user activity"""
+    conn = get_db()
+    
+    # Get user activity data
+    users = conn.execute('''
+        SELECT 
+            u.id,
+            u.name,
+            u.email,
+            u.location,
+            u.created_at,
+            u.is_banned,
+            COUNT(DISTINCT s.id) as total_skills,
+            COUNT(DISTINCT sr.id) as total_swap_requests,
+            COUNT(DISTINCT CASE WHEN sr.status = 'accepted' THEN sr.id END) as completed_swaps,
+            COUNT(DISTINCT r.id) as total_ratings_received,
+            AVG(r.rating) as avg_rating
+        FROM users u
+        LEFT JOIN skills s ON u.id = s.user_id
+        LEFT JOIN swap_requests sr ON (u.id = sr.requester_id OR u.id = sr.provider_id)
+        LEFT JOIN ratings r ON u.id = r.rated_id
+        WHERE u.is_admin = 0
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        'User ID', 'Name', 'Email', 'Location', 'Registration Date', 
+        'Status', 'Total Skills', 'Total Swap Requests', 'Completed Swaps',
+        'Total Ratings Received', 'Average Rating'
+    ])
+    
+    # Write data
+    for user in users:
+        status = 'Banned' if user['is_banned'] else 'Active'
+        avg_rating = round(user['avg_rating'], 2) if user['avg_rating'] else 'N/A'
+        
+        writer.writerow([
+            user['id'],
+            user['name'],
+            user['email'],
+            user['location'] or 'N/A',
+            user['created_at'],
+            status,
+            user['total_skills'],
+            user['total_swap_requests'],
+            user['completed_swaps'],
+            user['total_ratings_received'],
+            avg_rating
+        ])
+    
+    output.seek(0)
+    return output
+
+def generate_feedback_logs_report():
+    """Generate CSV report of feedback and ratings"""
+    conn = get_db()
+    
+    # Get feedback data
+    feedback = conn.execute('''
+        SELECT 
+            r.id,
+            r.rating,
+            r.feedback,
+            r.created_at,
+            rater.name as rater_name,
+            rater.email as rater_email,
+            rated.name as rated_name,
+            rated.email as rated_email,
+            sr.id as swap_request_id,
+            s1.skill_name as offered_skill,
+            s2.skill_name as wanted_skill
+        FROM ratings r
+        JOIN users rater ON r.rater_id = rater.id
+        JOIN users rated ON r.rated_id = rated.id
+        JOIN swap_requests sr ON r.swap_request_id = sr.id
+        JOIN skills s1 ON sr.offered_skill_id = s1.id
+        JOIN skills s2 ON sr.wanted_skill_id = s2.id
+        ORDER BY r.created_at DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        'Rating ID', 'Rating', 'Feedback', 'Date', 'Rater Name', 'Rater Email',
+        'Rated User', 'Rated Email', 'Swap Request ID', 'Offered Skill', 'Wanted Skill'
+    ])
+    
+    # Write data
+    for row in feedback:
+        writer.writerow([
+            row['id'],
+            row['rating'],
+            row['feedback'] or 'No feedback provided',
+            row['created_at'],
+            row['rater_name'],
+            row['rater_email'],
+            row['rated_name'],
+            row['rated_email'],
+            row['swap_request_id'],
+            row['offered_skill'],
+            row['wanted_skill']
+        ])
+    
+    output.seek(0)
+    return output
+
+def generate_swap_stats_report():
+    """Generate CSV report of swap statistics"""
+    conn = get_db()
+    
+    # Get swap statistics
+    swaps = conn.execute('''
+        SELECT 
+            sr.id,
+            sr.status,
+            sr.created_at,
+            sr.message,
+            requester.name as requester_name,
+            requester.email as requester_email,
+            provider.name as provider_name,
+            provider.email as provider_email,
+            s1.skill_name as offered_skill,
+            s1.description as offered_description,
+            s2.skill_name as wanted_skill,
+            s2.description as wanted_description,
+            r1.rating as requester_rating,
+            r1.feedback as requester_feedback,
+            r2.rating as provider_rating,
+            r2.feedback as provider_feedback
+        FROM swap_requests sr
+        JOIN users requester ON sr.requester_id = requester.id
+        JOIN users provider ON sr.provider_id = provider.id
+        JOIN skills s1 ON sr.offered_skill_id = s1.id
+        JOIN skills s2 ON sr.wanted_skill_id = s2.id
+        LEFT JOIN ratings r1 ON (sr.id = r1.swap_request_id AND sr.requester_id = r1.rater_id)
+        LEFT JOIN ratings r2 ON (sr.id = r2.swap_request_id AND sr.provider_id = r2.rater_id)
+        ORDER BY sr.created_at DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        'Swap ID', 'Status', 'Date', 'Message', 'Requester Name', 'Requester Email',
+        'Provider Name', 'Provider Email', 'Offered Skill', 'Offered Description',
+        'Wanted Skill', 'Wanted Description', 'Requester Rating', 'Requester Feedback',
+        'Provider Rating', 'Provider Feedback'
+    ])
+    
+    # Write data
+    for swap in swaps:
+        writer.writerow([
+            swap['id'],
+            swap['status'].title(),
+            swap['created_at'],
+            swap['message'] or 'No message',
+            swap['requester_name'],
+            swap['requester_email'],
+            swap['provider_name'],
+            swap['provider_email'],
+            swap['offered_skill'],
+            swap['offered_description'] or 'No description',
+            swap['wanted_skill'],
+            swap['wanted_description'] or 'No description',
+            swap['requester_rating'] or 'Not rated',
+            swap['requester_feedback'] or 'No feedback',
+            swap['provider_rating'] or 'Not rated',
+            swap['provider_feedback'] or 'No feedback'
+        ])
+    
+    output.seek(0)
+    return output
+
+# Report download routes
+@app.route('/admin/download/user_activity')
+@admin_required
+def download_user_activity():
+    """Download user activity report as CSV"""
+    try:
+        output = generate_user_activity_report()
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'user_activity_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        flash(f'Error generating user activity report: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/download/feedback_logs')
+@admin_required
+def download_feedback_logs():
+    """Download feedback logs report as CSV"""
+    try:
+        output = generate_feedback_logs_report()
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'feedback_logs_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        flash(f'Error generating feedback logs report: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/download/swap_stats')
+@admin_required
+def download_swap_stats():
+    """Download swap statistics report as CSV"""
+    try:
+        output = generate_swap_stats_report()
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'swap_stats_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        flash(f'Error generating swap stats report: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
 
 @app.route('/remove_profile_photo', methods=['POST'])
 @login_required

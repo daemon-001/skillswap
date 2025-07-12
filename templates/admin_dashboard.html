@@ -80,6 +80,53 @@
     </div>
 </div>
 
+<!-- Reports Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Download Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="report-card text-center p-3 border rounded">
+                            <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                            <h6 class="mb-2">User Activity Report</h6>
+                            <p class="text-muted small mb-3">Download comprehensive user activity data including registration dates, skills, swaps, and ratings.</p>
+                            <a href="{{ url_for('download_user_activity') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download me-2"></i>Download CSV
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="report-card text-center p-3 border rounded">
+                            <i class="fas fa-star fa-2x text-warning mb-3"></i>
+                            <h6 class="mb-2">Feedback Logs Report</h6>
+                            <p class="text-muted small mb-3">Download all user feedback and ratings with detailed information about each rating.</p>
+                            <a href="{{ url_for('download_feedback_logs') }}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-download me-2"></i>Download CSV
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="report-card text-center p-3 border rounded">
+                            <i class="fas fa-exchange-alt fa-2x text-success mb-3"></i>
+                            <h6 class="mb-2">Swap Statistics Report</h6>
+                            <p class="text-muted small mb-3">Download detailed swap statistics including status, participants, skills, and feedback.</p>
+                            <a href="{{ url_for('download_swap_stats') }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download me-2"></i>Download CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Recent Activity -->
 <div class="row">
     <div class="col-md-6 mb-4">

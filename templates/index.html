@@ -8,16 +8,22 @@
     <div class="container">
         <div class="row mb-4">
             <div class="col-12">
-                <h2 class="fw-bold mb-0">Skill Swap Platform</h2>
+                <h2 class="fw-bold mb-0 text-gradient">
+                    <i class="fas fa-users me-3"></i>Discover Amazing People
+                </h2>
+                <p class="text-muted">Find skilled individuals ready to share their expertise and learn from you!</p>
             </div>
         </div>
         <form method="get" class="row mb-4 g-2">
             <div class="col-auto">
-                <select class="form-select form-control" name="availability">
-                    <option value="">All Availability</option>
-                    {% for avail in availabilities %}
-                        <option value="{{ avail }}" {% if avail == selected_availability %}selected{% endif %}>{{ avail }}</option>
-                    {% endfor %}
+                <select class="form-select form-control availability-filter" name="availability">
+                    <option value="">All Users</option>
+                    <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>
+                        Available Users
+                    </option>
+                    <option value="unavailable" {% if selected_availability == 'unavailable' %}selected{% endif %}>
+                        Unavailable Users
+                    </option>
                 </select>
             </div>
             <div class="col-auto">
@@ -40,46 +46,83 @@
                 {% if search_query or selected_availability %}
                     Found {{ pagination.total }} profile{{ 's' if pagination.total != 1 else '' }}
                     {% if search_query %} matching "{{ search_query }}"{% endif %}
-                    {% if selected_availability %} with availability "{{ selected_availability }}"{% endif %}
+                    {% if selected_availability == 'available' %} (Available users only){% endif %}
+                    {% if selected_availability == 'unavailable' %} (Unavailable users only){% endif %}
                 {% else %}
                     Showing {{ pagination.total }} public profile{{ 's' if pagination.total != 1 else '' }}
                 {% endif %}
             </small>
         </div>
         {% for user in user_profiles %}
-        <div class="card mb-4 shadow-sm">
+        <div class="card mb-4 shadow-sm fade-in-up" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
             <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
                 <div class="d-flex align-items-center flex-grow-1">
                     <div class="me-4">
-                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; overflow: hidden;">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center position-relative" style="width: 80px; height: 80px; overflow: hidden; border: 3px solid var(--primary-color);">
                             {% if user.profile_photo %}
                                 <img src="{{ url_for('static', filename='uploads/' ~ user.profile_photo) }}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
-                                <span class="text-muted">Profile Photo</span>
+                                <div class="d-flex align-items-center justify-content-center w-100 h-100" style="background: var(--primary-gradient); color: white;">
+                                    <i class="fas fa-user fa-2x"></i>
+                                </div>
                             {% endif %}
                         </div>
                     </div>
                     <div>
-                        <h5 class="mb-1">{{ user.name }}</h5>
+                        <h5 class="mb-1">
+                            <a href="{{ url_for('view_profile', user_id=user.id) }}" class="text-gradient text-decoration-none">
+                                {{ user.name }}
+                            </a>
+                        </h5>
+                        {% if user.bio %}
+                        <p class="text-muted small mb-2 bio-text">{{ user.bio[:100] }}{% if user.bio|length > 100 %}...{% endif %}</p>
+                        {% endif %}
+                        <div class="mb-2">
+                            {% if user.availability %}
+                                <span class="availability-badge-available me-1">
+                                    <i class="fas fa-clock me-1"></i>Available
+                                </span>
+                                <small class="text-muted">{{ user.availability }}</small>
+                            {% else %}
+                                <span class="availability-badge-unavailable me-1">
+                                    <i class="fas fa-clock me-1"></i>Unavailable
+                                </span>
+                            {% endif %}
+                        </div>
                         <div class="mb-1">
-                            <span class="text-success small">Skills Offered &rarr;</span>
+                            <span class="text-success small fw-bold">
+                                <i class="fas fa-gift me-1"></i>Skills Offered &rarr;
+                            </span>
                             {% for skill in user.offered_skills %}
-                                <span class="badge bg-light text-dark border me-1">{{ skill }}</span>
+                                <span class="badge" style="background: var(--success-gradient); color: white; border: none;">{{ skill }}</span>
                             {% endfor %}
                         </div>
                         <div>
-                            <span class="text-primary small">Skill wanted &rarr;</span>
+                            <span class="text-primary small fw-bold">
+                                <i class="fas fa-search me-1"></i>Skills Wanted &rarr;
+                            </span>
                             {% for skill in user.wanted_skills %}
-                                <span class="badge bg-light text-dark border me-1">{{ skill }}</span>
+                                <span class="badge" style="background: var(--warning-gradient); color: white; border: none;">{{ skill }}</span>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
                 <div class="d-flex flex-column align-items-end">
-                    <button class="btn btn-info mb-2 request-btn" {% if not session.user_id %}data-bs-toggle="modal" data-bs-target="#loginPromptModal"{% endif %} {% if not session.user_id %}type="button"{% else %}onclick="window.location.href='{{ url_for('login') if not session.user_id else url_for('request_from_user', user_id=user.id) }}'"{% endif %}>
-                        Request
-                    </button>
-                    <div class="text-muted small">rating {{ user.rating }}/5</div>
+                    <div class="d-flex gap-2 mb-2">
+                        <a href="{{ url_for('view_profile', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View Profile
+                        </a>
+                        <button class="btn btn-primary btn-sm request-btn pulse" {% if not session.user_id %}data-bs-toggle="modal" data-bs-target="#loginPromptModal"{% endif %} {% if not session.user_id %}type="button"{% else %}onclick="window.location.href='{{ url_for('login') if not session.user_id else url_for('request_from_user', user_id=user.id) }}'"{% endif %}>
+                            <i class="fas fa-handshake me-1"></i>Request
+                        </button>
+                    </div>
+                    <div class="text-muted small">
+                        {% if user.has_rating %}
+                            <i class="fas fa-star text-warning me-1"></i>{{ user.rating }}
+                        {% else %}
+                            <i class="fas fa-star text-muted me-1"></i>{{ user.rating }}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -91,6 +134,11 @@
             <p class="text-muted">
                 {% if search_query or selected_availability %}
                     No profiles match your search criteria. Try different keywords or availability filters.
+                    {% if selected_availability == 'available' %}
+                        <br><small>No available users found at the moment.</small>
+                    {% elif selected_availability == 'unavailable' %}
+                        <br><small>No unavailable users found at the moment.</small>
+                    {% endif %}
                 {% else %}
                     No public profiles available at the moment.
                 {% endif %}
@@ -157,23 +205,23 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">
+                <h1 class="display-4 fw-bold mb-4 bounce-in">
                     <i class="fas fa-exchange-alt me-3"></i>SkillSwap
                 </h1>
-                <p class="lead mb-4">
+                <p class="lead mb-4 fade-in-up">
                     Connect with people who have skills you need, and share your expertise in return. 
                     Build meaningful relationships while learning and growing together.
                 </p>
-                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <div class="d-flex justify-content-center gap-3 flex-wrap fade-in-up" style="animation-delay: 0.4s;">
                     {% if not session.user_id %}
-                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg pulse">
                         <i class="fas fa-user-plus me-2"></i>Get Started
                     </a>
                     <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
                         <i class="fas fa-sign-in-alt me-2"></i>Sign In
                     </a>
                     {% else %}
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg pulse">
                         <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
                     </a>
                     <a href="{{ url_for('search') }}" class="btn btn-outline-light btn-lg">
@@ -200,12 +248,12 @@
         
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card h-100 text-center border-0 shadow-sm fade-in-up" style="animation-delay: 0.1s;">
                     <div class="card-body p-4">
-                        <div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-search fa-2x"></i>
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--primary-gradient);">
+                            <i class="fas fa-search fa-2x text-white"></i>
                         </div>
-                        <h4 class="card-title">Discover Skills</h4>
+                        <h4 class="card-title text-gradient">Discover Skills</h4>
                         <p class="card-text text-muted">
                             Browse through a diverse community of people offering their skills and expertise. 
                             Find exactly what you're looking for.
@@ -215,12 +263,12 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card h-100 text-center border-0 shadow-sm fade-in-up" style="animation-delay: 0.2s;">
                     <div class="card-body p-4">
-                        <div class="bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-exchange-alt fa-2x"></i>
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--success-gradient);">
+                            <i class="fas fa-exchange-alt fa-2x text-white"></i>
                         </div>
-                        <h4 class="card-title">Request Swaps</h4>
+                        <h4 class="card-title text-gradient">Request Swaps</h4>
                         <p class="card-text text-muted">
                             Send swap requests to people whose skills you need. 
                             Offer your own expertise in return for a fair exchange.
@@ -230,12 +278,12 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card h-100 text-center border-0 shadow-sm fade-in-up" style="animation-delay: 0.3s;">
                     <div class="card-body p-4">
-                        <div class="bg-warning bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-star fa-2x"></i>
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--warning-gradient);">
+                            <i class="fas fa-star fa-2x text-white"></i>
                         </div>
-                        <h4 class="card-title">Build Relationships</h4>
+                        <h4 class="card-title text-gradient">Build Relationships</h4>
                         <p class="card-text text-muted">
                             Learn from each other, build lasting connections, and grow your network 
                             through meaningful skill exchanges.
@@ -304,31 +352,31 @@
 </section>
 
 <!-- Statistics Section -->
-<section class="py-5 bg-dark text-white">
+<section class="py-5" style="background: var(--dark-gradient); color: white; border-radius: 20px;">
     <div class="container">
         <div class="row text-center">
             <div class="col-md-3 mb-3">
-                <div class="stats-card">
+                <div class="stats-card bounce-in" style="animation-delay: 0.1s;">
                     <h3 class="display-4 fw-bold">100+</h3>
-                    <p>Active Users</p>
+                    <p><i class="fas fa-users me-2"></i>Active Users</p>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stats-card">
+                <div class="stats-card bounce-in" style="animation-delay: 0.2s;">
                     <h3 class="display-4 fw-bold">500+</h3>
-                    <p>Skills Shared</p>
+                    <p><i class="fas fa-tools me-2"></i>Skills Shared</p>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stats-card">
+                <div class="stats-card bounce-in" style="animation-delay: 0.3s;">
                     <h3 class="display-4 fw-bold">200+</h3>
-                    <p>Successful Swaps</p>
+                    <p><i class="fas fa-handshake me-2"></i>Successful Swaps</p>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stats-card">
+                <div class="stats-card bounce-in" style="animation-delay: 0.4s;">
                     <h3 class="display-4 fw-bold">4.8</h3>
-                    <p>Average Rating</p>
+                    <p><i class="fas fa-star me-2"></i>Average Rating</p>
                 </div>
             </div>
         </div>

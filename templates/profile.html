@@ -36,10 +36,19 @@
                         <i class="fas fa-map-marker-alt me-2"></i>
                         {{ user.location or 'Location not specified' }}
                     </p>
-                    {% if user.availability %}
                     <p class="mb-2">
                         <i class="fas fa-clock me-2"></i>
-                        <strong>Availability:</strong> {{ user.availability }}
+                        <strong>Availability:</strong> 
+                        {% if user.availability %}
+                            <span class="badge bg-success">Available</span> {{ user.availability }}
+                        {% else %}
+                            <span class="badge bg-secondary">Not Available</span>
+                        {% endif %}
+                    </p>
+                    {% if user.bio %}
+                    <p class="mb-2">
+                        <i class="fas fa-user me-2"></i>
+                        <strong>Bio:</strong> {{ user.bio }}
                     </p>
                     {% endif %}
                     <p class="mb-2">
@@ -86,12 +95,37 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="availability" class="form-label">Availability</label>
-                        <textarea class="form-control" id="availability" name="availability" rows="3" 
-                                  placeholder="Describe when you're available for skill swaps...">{{ user.availability or '' }}</textarea>
+                        <label class="form-label">Availability Status</label>
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="is_available" name="is_available" 
+                                   {{ 'checked' if user.availability else '' }}>
+                            <label class="form-check-label" for="is_available">
+                                <i class="fas fa-clock me-1"></i>I am available for skill swaps
+                            </label>
+                        </div>
                         <div class="form-text">
                             <i class="fas fa-info-circle me-1"></i>
-                            Let others know when you're available for skill exchanges. This will be visible on your public profile.
+                            Toggle this switch to indicate if you're currently available for skill exchanges.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="availability_details" class="form-label">Availability Details</label>
+                        <textarea class="form-control" id="availability_details" name="availability_details" rows="2" 
+                                  placeholder="e.g., Weekdays 6-8 PM, Weekends anytime...">{{ user.availability or '' }}</textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Provide specific details about when you're available (optional).
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Bio</label>
+                        <textarea class="form-control" id="bio" name="bio" rows="4" 
+                                  placeholder="Tell others about yourself, your interests, and what you're passionate about...">{{ user.bio or '' }}</textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Share a bit about yourself to help others connect with you better.
                         </div>
                     </div>
                     
@@ -148,24 +182,38 @@
                     </div>
                     <div class="col-6 mb-3">
                         <div class="stats-card">
-                            <h4 class="mb-1">{{ stats.avg_rating|round(1) }}</h4>
-                            <small>Avg Rating</small>
+                            {% if stats.has_rating %}
+                                <h4 class="mb-1">{{ stats.avg_rating|round(1) }}</h4>
+                                <small>Avg Rating</small>
+                            {% else %}
+                                <h4 class="mb-1 text-muted">Unrated</h4>
+                                <small>No ratings yet</small>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
                 
-                {% if stats.avg_rating %}
+                {% if stats.has_rating %}
                 <div class="text-center mt-3">
                     <div class="rating-stars">
                         {% for i in range(5) %}
                             {% if i < stats.avg_rating %}
-                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star text-warning"></i>
                             {% else %}
-                                <i class="far fa-star"></i>
+                                <i class="far fa-star text-muted"></i>
                             {% endif %}
                         {% endfor %}
                     </div>
                     <small class="text-muted">({{ stats.total_ratings }} ratings)</small>
+                </div>
+                {% else %}
+                <div class="text-center mt-3">
+                    <div class="rating-stars">
+                        {% for i in range(5) %}
+                            <i class="far fa-star text-muted"></i>
+                        {% endfor %}
+                    </div>
+                    <small class="text-muted">No ratings yet</small>
                 </div>
                 {% endif %}
             </div>

@@ -147,6 +147,84 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Enhanced dropdown functionality
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.dropdown-toggle');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        
+        if (toggle && menu) {
+            // Add click outside to close
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target)) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            // Add keyboard support
+            toggle.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    menu.classList.toggle('show');
+                }
+            });
+            
+            // Add smooth animations
+            menu.addEventListener('show.bs.dropdown', function() {
+                this.style.opacity = '0';
+                this.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    this.style.opacity = '1';
+                    this.style.transform = 'translateY(0)';
+                }, 10);
+            });
+        }
+    });
+
+    // Enhanced form checkboxes and switches
+    const formChecks = document.querySelectorAll('.form-check-input');
+    formChecks.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Add visual feedback
+            if (this.checked) {
+                this.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+        
+        // Add focus styles
+        checkbox.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        checkbox.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+
+    // Enhanced form selects
+    const formSelects = document.querySelectorAll('.form-select');
+    formSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            // Add visual feedback
+            this.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+        
+        // Add focus styles
+        select.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        select.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
 });
 
 // Search function

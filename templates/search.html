@@ -85,7 +85,7 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" onclick="viewUserProfile({{ skill.user_id }})">
+                                            <li><a class="dropdown-item" href="{{ url_for('view_profile', user_id=skill.user_id) }}">
                                                 <i class="fas fa-user me-2"></i>View Profile
                                             </a></li>
                                             <li><a class="dropdown-item" href="#" onclick="reportSkill({{ skill.id }})">
@@ -100,7 +100,10 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
                                         <small class="text-muted">
-                                            <i class="fas fa-user me-1"></i>{{ skill.user_name }}
+                                            <i class="fas fa-user me-1"></i>
+                                            <a href="{{ url_for('view_profile', user_id=skill.user_id) }}" class="text-decoration-none">
+                                                {{ skill.user_name }}
+                                            </a>
                                         </small>
                                         {% if skill.location %}
                                         <br>
