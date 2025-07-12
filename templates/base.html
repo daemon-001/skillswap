@@ -27,7 +27,7 @@
                             <i class="fas fa-home me-1"></i>Home
                         </a>
                     </li>
-                    {% if session.user_id %}
+                    {% if session.user_id and not session.is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
@@ -38,11 +38,26 @@
                             <i class="fas fa-search me-1"></i>Search Skills
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('notifications') }}">
+                            <i class="fas fa-bell me-1"></i>Notifications
+                            {% if unread_notifications and unread_notifications > 0 %}
+                            <span class="badge bg-danger ms-1">{{ unread_notifications }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if session.user_id and session.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-cogs me-1"></i>Admin Dashboard
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
                 
                 <ul class="navbar-nav">
-                    {% if session.user_id %}
+                    {% if session.user_id and not session.is_admin %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>Account
@@ -57,7 +72,33 @@
                             </a></li>
                         </ul>
                     </li>
-                    {% else %}
+                    {% endif %}
+                    {% if session.user_id and session.is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i>Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-cogs me-2"></i>Admin Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">
+                                <i class="fas fa-users me-2"></i>Manage Users
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_skills') }}">
+                                <i class="fas fa-tools me-2"></i>Manage Skills
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_messages') }}">
+                                <i class="fas fa-bullhorn me-2"></i>Manage Messages
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% if not session.user_id %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>Login

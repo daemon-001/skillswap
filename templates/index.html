@@ -7,11 +7,8 @@
 <section class="py-5">
     <div class="container">
         <div class="row mb-4">
-            <div class="col-12 d-flex justify-content-between align-items-center">
+            <div class="col-12">
                 <h2 class="fw-bold mb-0">Skill Swap Platform</h2>
-                {% if not session.user_id %}
-                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">Login</a>
-                {% endif %}
             </div>
         </div>
         <form method="get" class="row mb-4 g-2">
@@ -79,7 +76,7 @@
                     </div>
                 </div>
                 <div class="d-flex flex-column align-items-end">
-                    <button class="btn btn-info mb-2 request-btn" {% if not session.user_id %}data-bs-toggle="modal" data-bs-target="#loginPromptModal"{% endif %} {% if not session.user_id %}type="button"{% else %}onclick="window.location.href='{{ url_for('login') if not session.user_id else url_for('search') }}'"{% endif %}>
+                    <button class="btn btn-info mb-2 request-btn" {% if not session.user_id %}data-bs-toggle="modal" data-bs-target="#loginPromptModal"{% endif %} {% if not session.user_id %}type="button"{% else %}onclick="window.location.href='{{ url_for('login') if not session.user_id else url_for('request_from_user', user_id=user.id) }}'"{% endif %}>
                         Request
                     </button>
                     <div class="text-muted small">rating {{ user.rating }}/5</div>

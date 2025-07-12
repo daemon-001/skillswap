@@ -132,6 +132,20 @@ def init_db():
         )
     ''')
     
+    # Notifications table (for user notifications)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT DEFAULT 'info', -- 'info', 'warning', 'error', 'success'
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
     # Create default admin user
     cursor.execute("SELECT * FROM users WHERE email = 'admin@skillswap.com'")
     if not cursor.fetchone():
@@ -177,6 +191,19 @@ def admin_required(f):
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+
+# Context processor to make unread notifications count available in all templates
+@app.context_processor
+def inject_unread_notifications():
+    if 'user_id' in session:
+        conn = get_db()
+        unread_count = conn.execute('''
+            SELECT COUNT(*) as count FROM notifications 
+            WHERE user_id = ? AND is_read = 0
+        ''', (session['user_id'],)).fetchone()['count']
+        conn.close()
+        return {'unread_notifications': unread_count}
+    return {'unread_notifications': 0}
 
 # Routes
 @app.route('/')
@@ -388,6 +415,12 @@ def dashboard():
         ORDER BY sr.created_at DESC
     ''', (session['user_id'],)).fetchall()
     
+    # Get unread notification count
+    unread_notifications = conn.execute('''
+        SELECT COUNT(*) as count FROM notifications 
+        WHERE user_id = ? AND is_read = 0
+    ''', (session['user_id'],)).fetchone()['count']
+    
     conn.close()
     
     # Convert datetime strings to datetime objects
@@ -415,7 +448,8 @@ def dashboard():
                          offered_skills=offered_skills, 
                          wanted_skills=wanted_skills,
                          swap_requests=all_requests,
-                         stats=stats)
+                         stats=stats,
+                         unread_notifications=unread_notifications)
 
 @app.route('/profile')
 @login_required
@@ -911,10 +945,35 @@ def approve_skill(skill_id):
 @admin_required
 def reject_skill(skill_id):
     conn = get_db()
-    conn.execute('UPDATE skills SET is_approved = 0 WHERE id = ?', (skill_id,))
+    
+    # Get skill details before deleting
+    skill = conn.execute('''
+        SELECT s.*, u.name as user_name, u.email 
+        FROM skills s 
+        JOIN users u ON s.user_id = u.id 
+        WHERE s.id = ?
+    ''', (skill_id,)).fetchone()
+    
+    if not skill:
+        flash('Skill not found.', 'error')
+        return redirect(url_for('admin_skills'))
+    
+    # Delete the skill
+    conn.execute('DELETE FROM skills WHERE id = ?', (skill_id,))
+    
+    # Create notification for the user
+    notification_title = "Skill Rejected"
+    notification_message = f"Your skill '{skill['skill_name']}' has been rejected by an administrator. Please review our community guidelines and consider adding a different skill."
+    
+    conn.execute('''
+        INSERT INTO notifications (user_id, title, message, type) 
+        VALUES (?, ?, ?, ?)
+    ''', (skill['user_id'], notification_title, notification_message, 'warning'))
+    
     conn.commit()
     conn.close()
-    flash('Skill rejected.', 'warning')
+    
+    flash(f'Skill "{skill["skill_name"]}" rejected and user notified.', 'warning')
     return redirect(url_for('admin_skills'))
 
 @app.route('/admin/messages')
@@ -976,6 +1035,108 @@ def remove_profile_photo():
     except Exception as e:
         flash(f'Error removing profile photo: {str(e)}', 'error')
     return redirect(url_for('profile'))
+
+@app.route('/request_from_user/<int:user_id>')
+@login_required
+def request_from_user(user_id):
+    conn = get_db()
+    
+    # Get the user details
+    user = conn.execute('SELECT * FROM users WHERE id = ? AND is_public = 1 AND is_banned = 0', (user_id,)).fetchone()
+    
+    if not user:
+        flash('User not found or not available.', 'error')
+        return redirect(url_for('index'))
+    
+    # Get all offered skills of this user
+    offered_skills = conn.execute('''
+        SELECT * FROM skills 
+        WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1
+    ''', (user_id,)).fetchall()
+    
+    if not offered_skills:
+        flash('This user has no skills available for swapping.', 'warning')
+        return redirect(url_for('index'))
+    
+    # Get current user's offered skills
+    user_skills = conn.execute('''
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered'
+    ''', (session['user_id'],)).fetchall()
+    
+    conn.close()
+    
+    # Convert datetime strings to datetime objects
+    user = convert_row_datetimes(user)
+    offered_skills = convert_rows_datetimes(offered_skills)
+    user_skills = convert_rows_datetimes(user_skills)
+    
+    return render_template('request_from_user.html', 
+                         target_user=user, 
+                         offered_skills=offered_skills, 
+                         user_skills=user_skills)
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    conn = get_db()
+    user_notifications = conn.execute('''
+        SELECT * FROM notifications 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+    ''', (session['user_id'],)).fetchall()
+    conn.close()
+    
+    # Convert datetime strings to datetime objects
+    user_notifications = convert_rows_datetimes(user_notifications)
+    
+    return render_template('notifications.html', notifications=user_notifications)
+
+@app.route('/mark_notification_read/<int:notification_id>')
+@login_required
+def mark_notification_read(notification_id):
+    conn = get_db()
+    # Verify the notification belongs to the current user
+    notification = conn.execute('''
+        SELECT id FROM notifications 
+        WHERE id = ? AND user_id = ?
+    ''', (notification_id, session['user_id'])).fetchone()
+    
+    if notification:
+        conn.execute('UPDATE notifications SET is_read = 1 WHERE id = ?', (notification_id,))
+        conn.commit()
+    
+    conn.close()
+    return redirect(url_for('notifications'))
+
+@app.route('/mark_all_notifications_read')
+@login_required
+def mark_all_notifications_read():
+    conn = get_db()
+    conn.execute('UPDATE notifications SET is_read = 1 WHERE user_id = ?', (session['user_id'],))
+    conn.commit()
+    conn.close()
+    flash('All notifications marked as read.', 'success')
+    return redirect(url_for('notifications'))
+
+@app.route('/delete_notification/<int:notification_id>')
+@login_required
+def delete_notification(notification_id):
+    conn = get_db()
+    # Verify the notification belongs to the current user
+    notification = conn.execute('''
+        SELECT id FROM notifications 
+        WHERE id = ? AND user_id = ?
+    ''', (notification_id, session['user_id'])).fetchone()
+    
+    if notification:
+        conn.execute('DELETE FROM notifications WHERE id = ?', (notification_id,))
+        conn.commit()
+        flash('Notification deleted.', 'success')
+    else:
+        flash('Notification not found.', 'error')
+    
+    conn.close()
+    return redirect(url_for('notifications'))
 
 if __name__ == '__main__':
     init_db()

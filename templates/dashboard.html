@@ -3,6 +3,20 @@
 {% block title %}Dashboard - SkillSwap{% endblock %}
 
 {% block content %}
+<!-- Notifications Alert -->
+{% if unread_notifications and unread_notifications > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-bell me-2"></i>
+            You have <strong>{{ unread_notifications }}</strong> unread notification{{ 's' if unread_notifications != 1 else '' }}.
+            <a href="{{ url_for('notifications') }}" class="alert-link">View notifications</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Welcome Section -->
 <div class="row mb-4">
     <div class="col-12">
