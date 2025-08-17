@@ -1,4 +1,4 @@
-# 🚀 SkillSwap - Connect, Learn, Grow
+# 🚀 SkillSwap - Connect, Learn and Grow
 
 A modern web application that enables users to exchange skills and knowledge with each other. Built with Flask and featuring a beautiful, responsive UI with real-time notifications and comprehensive admin tools.
 
