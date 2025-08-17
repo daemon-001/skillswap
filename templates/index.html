@@ -3,337 +3,272 @@
 {% block title %}SkillSwap - Connect, Learn, Grow{% endblock %}
 
 {% block content %}
-<!-- Public Profiles Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h2 class="fw-bold mb-0 text-gradient">
-                    <i class="fas fa-users me-3"></i>Discover Amazing People
-                </h2>
-                <p class="text-muted">Find skilled individuals ready to share their expertise and learn from you!</p>
-            </div>
-        </div>
-        <form method="get" class="row mb-4 g-2">
-            <div class="col-auto">
-                <select class="form-select form-control availability-filter" name="availability">
-                    <option value="">All Users</option>
-                    <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>
-                        Available Users
-                    </option>
-                    <option value="unavailable" {% if selected_availability == 'unavailable' %}selected{% endif %}>
-                        Unavailable Users
-                    </option>
-                </select>
-            </div>
-            <div class="col-auto">
-                <input type="text" class="form-control" name="q" placeholder="search" value="{{ search_query or '' }}">
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-primary" type="submit">search</button>
-            </div>
-            {% if search_query or selected_availability %}
-            <div class="col-auto">
-                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-times me-1"></i>Clear
-                </a>
-            </div>
-            {% endif %}
-        </form>
-        {% if user_profiles %}
-        <div class="mb-3">
-            <small class="text-muted">
-                {% if search_query or selected_availability %}
-                    Found {{ pagination.total }} profile{{ 's' if pagination.total != 1 else '' }}
-                    {% if search_query %} matching "{{ search_query }}"{% endif %}
-                    {% if selected_availability == 'available' %} (Available users only){% endif %}
-                    {% if selected_availability == 'unavailable' %} (Unavailable users only){% endif %}
-                {% else %}
-                    Showing {{ pagination.total }} public profile{{ 's' if pagination.total != 1 else '' }}
-                {% endif %}
-            </small>
-        </div>
-        {% for user in user_profiles %}
-        <div class="card mb-4 shadow-sm fade-in-up" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
-            <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
-                <div class="d-flex align-items-center flex-grow-1">
-                    <div class="me-4">
-                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center position-relative" style="width: 80px; height: 80px; overflow: hidden; border: 3px solid var(--primary-color);">
-                            {% if user.profile_photo %}
-                                <img src="{{ url_for('static', filename='uploads/' ~ user.profile_photo) }}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">
-                            {% else %}
-                                <div class="d-flex align-items-center justify-content-center w-100 h-100" style="background: var(--primary-gradient); color: white;">
-                                    <i class="fas fa-user fa-2x"></i>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">
-                            <a href="{{ url_for('view_profile', user_id=user.id) }}" class="text-gradient text-decoration-none">
-                                {{ user.name }}
-                            </a>
-                        </h5>
-                        {% if user.bio %}
-                        <p class="text-muted small mb-2 bio-text">{{ user.bio[:100] }}{% if user.bio|length > 100 %}...{% endif %}</p>
-                        {% endif %}
-                        <div class="mb-2">
-                            {% if user.availability %}
-                                <span class="availability-badge-available me-1">
-                                    <i class="fas fa-clock me-1"></i>Available
-                                </span>
-                                <small class="text-muted">{{ user.availability }}</small>
-                            {% else %}
-                                <span class="availability-badge-unavailable me-1">
-                                    <i class="fas fa-clock me-1"></i>Unavailable
-                                </span>
-                            {% endif %}
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-success small fw-bold">
-                                <i class="fas fa-gift me-1"></i>Skills Offered &rarr;
-                            </span>
-                            {% for skill in user.offered_skills %}
-                                <span class="badge" style="background: var(--success-gradient); color: white; border: none;">{{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                        <div>
-                            <span class="text-primary small fw-bold">
-                                <i class="fas fa-search me-1"></i>Skills Wanted &rarr;
-                            </span>
-                            {% for skill in user.wanted_skills %}
-                                <span class="badge" style="background: var(--warning-gradient); color: white; border: none;">{{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex flex-column align-items-end">
-                    <div class="d-flex gap-2 mb-2">
-                        <a href="{{ url_for('view_profile', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-eye me-1"></i>View Profile
-                        </a>
-                        <button class="btn btn-primary btn-sm request-btn pulse" {% if not session.user_id %}data-bs-toggle="modal" data-bs-target="#loginPromptModal"{% endif %} {% if not session.user_id %}type="button"{% else %}onclick="window.location.href='{{ url_for('login') if not session.user_id else url_for('request_from_user', user_id=user.id) }}'"{% endif %}>
-                            <i class="fas fa-handshake me-1"></i>Request
-                        </button>
-                    </div>
-                    <div class="text-muted small">
-                        {% if user.has_rating %}
-                            <i class="fas fa-star text-warning me-1"></i>{{ user.rating }}
-                        {% else %}
-                            <i class="fas fa-star text-muted me-1"></i>{{ user.rating }}
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-        {% else %}
-        <div class="text-center py-5">
-            <i class="fas fa-search fa-3x text-muted mb-3"></i>
-            <h4 class="text-muted">No profiles found</h4>
-            <p class="text-muted">
-                {% if search_query or selected_availability %}
-                    No profiles match your search criteria. Try different keywords or availability filters.
-                    {% if selected_availability == 'available' %}
-                        <br><small>No available users found at the moment.</small>
-                    {% elif selected_availability == 'unavailable' %}
-                        <br><small>No unavailable users found at the moment.</small>
-                    {% endif %}
-                {% else %}
-                    No public profiles available at the moment.
-                {% endif %}
-            </p>
-            <div class="mt-3">
-                <a href="{{ url_for('index') }}" class="btn btn-primary">
-                    <i class="fas fa-home me-2"></i>Clear Filters
-                </a>
-            </div>
-        </div>
-        {% endif %}
-        <!-- Pagination -->
-        {% if pagination.pages > 1 %}
-        <nav aria-label="Profile pages">
-            <ul class="pagination justify-content-center">
-                {% if pagination.has_prev %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ pagination.prev_num }}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&lt;</a>
-                </li>
-                {% endif %}
-                {% for page_num in pagination.iter_pages() %}
-                    {% if page_num %}
-                        {% if page_num != pagination.page %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">{{ page_num }}</a></li>
-                        {% else %}
-                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
-                        {% endif %}
-                    {% else %}
-                    <li class="page-item disabled"><span class="page-link">...</span></li>
-                    {% endif %}
-                {% endfor %}
-                {% if pagination.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ pagination.next_num }}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&gt;</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-    </div>
-</section>
-
-<!-- Login Prompt Modal -->
-<div class="modal fade" id="loginPromptModal" tabindex="-1" aria-labelledby="loginPromptModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="loginPromptModalLabel">Login Required</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        You must be logged in to request a skill swap. Please login or sign up to continue.
-      </div>
-      <div class="modal-footer">
-        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-        <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Sign Up</a>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Hero Section -->
-<section class="hero-section text-center">
+<section class="hero-section">
     <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center text-center">
             <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4 bounce-in">
-                    <i class="fas fa-exchange-alt me-3"></i>SkillSwap
-                </h1>
-                <p class="lead mb-4 fade-in-up">
-                    Connect with people who have skills you need, and share your expertise in return. 
-                    Build meaningful relationships while learning and growing together.
-                </p>
-                <div class="d-flex justify-content-center gap-3 flex-wrap fade-in-up" style="animation-delay: 0.4s;">
-                    {% if not session.user_id %}
-                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg pulse">
+                <h1>Connect Through Skills</h1>
+                <p>Join a community of learners and teachers. Share your expertise and discover new skills from amazing people around the world.</p>
+                {% if not session.user_id %}
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
                         <i class="fas fa-user-plus me-2"></i>Get Started
                     </a>
                     <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
                         <i class="fas fa-sign-in-alt me-2"></i>Sign In
                     </a>
-                    {% else %}
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg pulse">
-                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
-                    </a>
-                    <a href="{{ url_for('search') }}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-search me-2"></i>Find Skills
-                    </a>
-                    {% endif %}
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </section>
 
-<!-- Features Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-lg-8 mx-auto">
-                <h2 class="display-5 fw-bold text-gradient mb-3">How It Works</h2>
-                <p class="lead text-muted">
-                    SkillSwap makes it easy to find people with the skills you need and offer your expertise in return.
-                </p>
-            </div>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 text-center border-0 shadow-sm fade-in-up" style="animation-delay: 0.1s;">
-                    <div class="card-body p-4">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--primary-gradient);">
-                            <i class="fas fa-search fa-2x text-white"></i>
-                        </div>
-                        <h4 class="card-title text-gradient">Discover Skills</h4>
-                        <p class="card-text text-muted">
-                            Browse through a diverse community of people offering their skills and expertise. 
-                            Find exactly what you're looking for.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card h-100 text-center border-0 shadow-sm fade-in-up" style="animation-delay: 0.2s;">
-                    <div class="card-body p-4">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--success-gradient);">
-                            <i class="fas fa-exchange-alt fa-2x text-white"></i>
-                        </div>
-                        <h4 class="card-title text-gradient">Request Swaps</h4>
-                        <p class="card-text text-muted">
-                            Send swap requests to people whose skills you need. 
-                            Offer your own expertise in return for a fair exchange.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card h-100 text-center border-0 shadow-sm fade-in-up" style="animation-delay: 0.3s;">
-                    <div class="card-body p-4">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: var(--warning-gradient);">
-                            <i class="fas fa-star fa-2x text-white"></i>
-                        </div>
-                        <h4 class="card-title text-gradient">Build Relationships</h4>
-                        <p class="card-text text-muted">
-                            Learn from each other, build lasting connections, and grow your network 
-                            through meaningful skill exchanges.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Announcements Section -->
-{% if announcements %}
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <h3 class="text-center mb-4">
-                    <i class="fas fa-bullhorn me-2"></i>Latest Updates
-                </h3>
-                {% for announcement in announcements %}
-                <div class="card mb-3 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">{{ announcement.title }}</h5>
-                        <p class="card-text text-muted">{{ announcement.content }}</p>
-                        <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            {{ announcement.created_at.strftime('%B %d, %Y') }}
-                        </small>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- Call to Action -->
+<!-- Search and Filter Section -->
 <section class="py-5">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8 text-center">
-                <h2 class="display-6 fw-bold mb-4">Ready to Start Swapping Skills?</h2>
-                <p class="lead text-muted mb-4">
-                    Join our community today and discover the power of skill sharing. 
-                    Whether you're a beginner or an expert, there's always something to learn and share.
-                </p>
-                {% if not session.user_id %}
-                <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="availability" class="form-label">Filter by Availability</label>
+                                <select class="form-select" id="availability" name="availability">
+                                    <option value="">All Users</option>
+                                    <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>
+                                        Available Users
+                                    </option>
+                                    <option value="unavailable" {% if selected_availability == 'unavailable' %}selected{% endif %}>
+                                        Unavailable Users
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="search" class="form-label">Search Users</label>
+                                <input type="text" class="form-control" id="search" name="q" placeholder="Search by name or skills..." value="{{ search_query or '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary w-100" type="submit">
+                                    <i class="fas fa-search me-1"></i>Search
+                                </button>
+                            </div>
+                        </form>
+                        {% if search_query or selected_availability %}
+                        <div class="mt-3">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Clear Filters
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- User Profiles Section -->
+<section class="py-5">
+    <div class="container">
+        <!-- Results Summary -->
+        {% if user_profiles %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Discover Amazing People</h2>
+                    <small class="text-muted">
+                        {% if search_query or selected_availability %}
+                            Found {{ pagination.total }} profile{{ 's' if pagination.total != 1 else '' }}
+                            {% if search_query %} matching "{{ search_query }}"{% endif %}
+                        {% else %}
+                            {{ pagination.total }} public profile{{ 's' if pagination.total != 1 else '' }}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Cards -->
+        <div class="row g-4">
+            {% for user in user_profiles %}
+            <div class="col-lg-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="me-3">
+                                {% if user.profile_photo %}
+                                    <img src="{{ url_for('static', filename='uploads/' ~ user.profile_photo) }}" 
+                                         alt="{{ user.name }}" 
+                                         class="rounded-circle"
+                                         style="width: 64px; height: 64px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white"
+                                         style="width: 64px; height: 64px;">
+                                        <i class="fas fa-user fa-lg"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-1">
+                                    <a href="{{ url_for('view_profile', user_id=user.id) }}" class="text-decoration-none">
+                                        {{ user.name }}
+                                    </a>
+                                </h5>
+                                {% if user.bio %}
+                                <p class="text-muted small mb-2">{{ user.bio[:80] }}{% if user.bio|length > 80 %}...{% endif %}</p>
+                                {% endif %}
+                                <div class="mb-2">
+                                    {% if user.availability %}
+                                        <span class="badge bg-success me-1">
+                                            <i class="fas fa-clock me-1"></i>Available
+                                        </span>
+                                        <small class="text-muted">{{ user.availability }}</small>
+                                    {% else %}
+                                        <span class="badge bg-secondary me-1">
+                                            <i class="fas fa-clock me-1"></i>Unavailable
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills Offered -->
+                        {% if user.offered_skills %}
+                        <div class="mb-3">
+                            <h6 class="text-muted small mb-2">
+                                <i class="fas fa-gift me-1"></i>Skills Offered
+                            </h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for skill in user.offered_skills[:3] %}
+                                    <span class="badge bg-primary">{{ skill }}</span>
+                                {% endfor %}
+                                {% if user.offered_skills|length > 3 %}
+                                    <span class="badge bg-light text-dark">+{{ user.offered_skills|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Skills Wanted -->
+                        {% if user.wanted_skills %}
+                        <div class="mb-3">
+                            <h6 class="text-muted small mb-2">
+                                <i class="fas fa-search me-1"></i>Skills Wanted
+                            </h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for skill in user.wanted_skills[:3] %}
+                                    <span class="badge bg-warning text-dark">{{ skill }}</span>
+                                {% endfor %}
+                                {% if user.wanted_skills|length > 3 %}
+                                    <span class="badge bg-light text-dark">+{{ user.wanted_skills|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Button -->
+                        <div class="d-grid">
+                            {% if session.user_id %}
+                                <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-handshake me-2"></i>Request Swap
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('login', from_request='true') }}" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to Request
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <nav aria-label="User profiles pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('index', page=pagination.prev_num, q=search_query, availability=selected_availability) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in pagination.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('index', page=page_num, q=search_query, availability=selected_availability) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('index', page=pagination.next_num, q=search_query, availability=selected_availability) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- No Results -->
+        <div class="row justify-content-center">
+            <div class="col-lg-6 text-center">
+                <div class="card shadow-sm">
+                    <div class="card-body py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h3>No Users Found</h3>
+                        <p class="text-muted mb-4">
+                            {% if search_query or selected_availability %}
+                                Try adjusting your search criteria or filters.
+                            {% else %}
+                                No public profiles available at the moment.
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>View All Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+{% if not session.user_id %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2>Ready to Start Learning?</h2>
+                <p class="text-muted mb-4">Join thousands of learners and teachers on SkillSwap. Create your profile and start connecting today!</p>
+                <div class="d-flex gap-3 justify-content-center">
                     <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
                         <i class="fas fa-user-plus me-2"></i>Create Account
                     </a>
@@ -341,45 +276,9 @@
                         <i class="fas fa-sign-in-alt me-2"></i>Sign In
                     </a>
                 </div>
-                {% else %}
-                <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-search me-2"></i>Find Skills to Swap
-                </a>
-                {% endif %}
             </div>
         </div>
     </div>
 </section>
-
-<!-- Statistics Section -->
-<section class="py-5" style="background: var(--dark-gradient); color: white; border-radius: 20px;">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-3 mb-3">
-                <div class="stats-card bounce-in" style="animation-delay: 0.1s;">
-                    <h3 class="display-4 fw-bold">100+</h3>
-                    <p><i class="fas fa-users me-2"></i>Active Users</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="stats-card bounce-in" style="animation-delay: 0.2s;">
-                    <h3 class="display-4 fw-bold">500+</h3>
-                    <p><i class="fas fa-tools me-2"></i>Skills Shared</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="stats-card bounce-in" style="animation-delay: 0.3s;">
-                    <h3 class="display-4 fw-bold">200+</h3>
-                    <p><i class="fas fa-handshake me-2"></i>Successful Swaps</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="stats-card bounce-in" style="animation-delay: 0.4s;">
-                    <h3 class="display-4 fw-bold">4.8</h3>
-                    <p><i class="fas fa-star me-2"></i>Average Rating</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+{% endif %}
 {% endblock %} 

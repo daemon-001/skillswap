@@ -3,88 +3,99 @@
 {% block title %}Login - SkillSwap{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card border-0 shadow-lg">
-            <div class="card-header text-center py-4">
-                <h3 class="mb-0">
-                    <i class="fas fa-sign-in-alt me-2"></i>Welcome Back
-                </h3>
-                <p class="text-muted mb-0">Sign in to your SkillSwap account</p>
-            </div>
-            <div class="card-body p-4">
-                <form method="POST" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">
-                            <i class="fas fa-envelope me-2"></i>Email Address
-                        </label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                        <div class="invalid-feedback">
-                            Please enter a valid email address.
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <!-- Login Card -->
+                <div class="card shadow-lg">
+                    <div class="card-header text-center py-4">
+                        <h3 class="mb-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Welcome Back
+                        </h3>
+                        <p class="text-muted mb-0">Sign in to your SkillSwap account</p>
+                        {% if request.args.get('from_request') %}
+                        <div class="alert alert-info mt-3 mb-0" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You need to be logged in to request skill swaps. Please sign in to continue.
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>Email Address
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid email address.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Password
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please enter your password.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                <label class="form-check-label" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="text-center">
+                            <p class="mb-0">
+                                Don't have an account? 
+                                <a href="{{ url_for('register') }}" class="text-decoration-none">
+                                    <i class="fas fa-user-plus me-1"></i>Create one here
+                                </a>
+                            </p>
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock me-2"></i>Password
-                        </label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <div class="invalid-feedback">
-                            Please enter your password.
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                        <label class="form-check-label" for="remember">
-                            Remember me
-                        </label>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                        </button>
-                    </div>
-                </form>
-                
-                <hr class="my-4">
-                
-                <div class="text-center">
-                    <p class="mb-0">
-                        Don't have an account? 
-                        <a href="{{ url_for('register') }}" class="text-decoration-none">
-                            <i class="fas fa-user-plus me-1"></i>Create one here
-                        </a>
-                    </p>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Demo Account Info -->
-        <div class="card border-0 shadow-sm mt-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">
-                    <i class="fas fa-info-circle me-2"></i>Demo Account
-                </h6>
-                <p class="card-text small text-muted mb-2">
-                    For testing purposes, you can use the admin account:
-                </p>
-                <div class="bg-light p-2 rounded">
-                    <small>
-                        <strong>Email:</strong> admin@skillswap.com<br>
-                        <strong>Password:</strong> admin123
-                    </small>
+                
+                <!-- Demo Account Info -->
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted">
+                            <i class="fas fa-info-circle me-2"></i>Demo Account
+                        </h6>
+                        <p class="card-text small text-muted mb-2">
+                            For testing purposes, you can use the admin account:
+                        </p>
+                        <div class="bg-light p-3 rounded">
+                            <small>
+                                <strong>Email:</strong> admin@skillswap.com<br>
+                                <strong>Password:</strong> admin123
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
