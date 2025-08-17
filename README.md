@@ -1,10 +1,5 @@
 # 🚀 SkillSwap - Connect, Learn, Grow
 
-<<<<<<< HEAD
-=======
-# 🚀 SkillSwap - Connect, Learn, Grow
-
->>>>>>> 88df7814db435fb5f4f0aa6d1f7ba985c62c5b99
 A modern web application that enables users to exchange skills and knowledge with each other. Built with Flask and featuring a beautiful, responsive UI with real-time notifications and comprehensive admin tools.
 
 ![SkillSwap](https://img.shields.io/badge/SkillSwap-Platform-blue)
@@ -19,14 +14,10 @@ A modern web application that enables users to exchange skills and knowledge wit
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Admin Features](#-admin-features)
-<<<<<<< HEAD
 - [API Endpoints](#-api-endpoints)
 - [Database Schema](#-database-schema)
 - [Contributing](#-contributing)
 - [License](#-license)
-=======
-- [Contributors](#-contribution)
->>>>>>> 88df7814db435fb5f4f0aa6d1f7ba985c62c5b99
 
 ## ✨ Features
 
@@ -191,7 +182,6 @@ Download comprehensive CSV reports:
 - **Feedback Logs Report**: Detailed rating and feedback data
 - **Swap Statistics Report**: Complete swap information with outcomes
 
-<<<<<<< HEAD
 ## 🔌 API Endpoints
 
 ### Authentication
@@ -299,8 +289,6 @@ CREATE TABLE ratings (
 );
 ```
 
-=======
->>>>>>> 88df7814db435fb5f4f0aa6d1f7ba985c62c5b99
 ## 🛠️ Technical Stack
 
 - **Backend**: Flask (Python web framework)
@@ -351,7 +339,6 @@ skillswap/
 - **Admin Access Control**: Role-based access control
 - **SQL Injection Prevention**: Parameterized queries
 
-<<<<<<< HEAD
 ## 🚀 Deployment
 
 ### Development
@@ -396,15 +383,3 @@ If you have any questions or need support:
 ---
 
 **Made with ❤️ for the skill-sharing community** 
-=======
-
-## 🤝 Contributors
-
-1. Gaurav Kumar Gupta (gauravkrguptagkg@gmail.com)
-2. Rahul Prasad (rahul.3057.12@gmail.com)
-3. Rohan Oraon (rohanoraon808484@gmail.com)
-4. Nitesh Kumar (nitesh.kumar4work@gmail.com)
-
----
-
->>>>>>> 88df7814db435fb5f4f0aa6d1f7ba985c62c5b99
