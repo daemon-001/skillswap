@@ -67,21 +67,40 @@
                                         {% else %}
                                             <span class="badge bg-success">Active</span>
                                         {% endif %}
+                                        {% if user.is_under_supervision %}
+                                            <span class="badge bg-warning text-dark ms-1">Under Supervision</span>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        {% if user.is_banned %}
-                                            <a href="{{ url_for('unban_user', user_id=user.id) }}" 
-                                               class="btn btn-sm btn-outline-success admin-action-btn"
-                                               data-action="unban" data-target="user">
-                                                <i class="fas fa-user-check me-1"></i>Unban
-                                            </a>
-                                        {% else %}
-                                            <a href="{{ url_for('ban_user', user_id=user.id) }}" 
-                                               class="btn btn-sm btn-outline-danger admin-action-btn"
-                                               data-action="ban" data-target="user">
-                                                <i class="fas fa-user-times me-1"></i>Ban
-                                            </a>
-                                        {% endif %}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if user.is_banned %}
+                                                <a href="{{ url_for('unban_user', user_id=user.id) }}" 
+                                                   class="btn btn-outline-success admin-action-btn"
+                                                   data-action="unban" data-target="user">
+                                                    <i class="fas fa-user-check me-1"></i>Unban
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('ban_user', user_id=user.id) }}" 
+                                                   class="btn btn-outline-danger admin-action-btn"
+                                                   data-action="ban" data-target="user">
+                                                    <i class="fas fa-user-times me-1"></i>Ban
+                                                </a>
+                                            {% endif %}
+
+                                            {% if user.is_under_supervision %}
+                                                <a href="{{ url_for('unsupervise_user', user_id=user.id) }}" 
+                                                   class="btn btn-outline-primary admin-action-btn"
+                                                   data-action="remove supervision" data-target="user">
+                                                    <i class="fas fa-user-shield me-1"></i>Remove Supervision
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('supervise_user', user_id=user.id) }}" 
+                                                   class="btn btn-outline-warning admin-action-btn"
+                                                   data-action="place under supervision" data-target="user">
+                                                    <i class="fas fa-user-shield me-1"></i>Under Supervision
+                                                </a>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}

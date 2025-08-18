@@ -160,7 +160,7 @@
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex align-items-start mb-3">
-                            <div class="me-3">
+                            <div class="me-3 position-relative">
                                 {% if user.profile_photo %}
                                     <img src="{{ url_for('static', filename='uploads/' ~ user.profile_photo) }}" 
                                          alt="{{ user.name }}" 
@@ -170,6 +170,13 @@
                                     <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white"
                                          style="width: 64px; height: 64px;">
                                         <i class="fas fa-user fa-lg"></i>
+                                    </div>
+                                {% endif %}
+                                {% if user.is_under_supervision %}
+                                    <div class="position-absolute top-0 end-0 bg-warning rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width: 20px; height: 20px; transform: translate(25%, -25%);"
+                                         title="User is under supervision">
+                                        <i class="fas fa-user-shield text-dark" style="font-size: 10px;"></i>
                                     </div>
                                 {% endif %}
                             </div>
@@ -234,9 +241,15 @@
                         <!-- Action Button -->
                         <div class="d-grid">
                             {% if session.user_id %}
-                                <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary">
-                                    <i class="fas fa-handshake me-2"></i>Request Swap
-                                </a>
+                                {% if user.is_under_supervision %}
+                                    <button class="btn btn-secondary" disabled title="This user is under supervision and cannot receive swap requests">
+                                        <i class="fas fa-user-shield me-2"></i>Under Supervision
+                                    </button>
+                                {% else %}
+                                    <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-handshake me-2"></i>Request Swap
+                                    </a>
+                                {% endif %}
                             {% else %}
                                 <a href="{{ url_for('login', from_request='true') }}" class="btn btn-primary">
                                     <i class="fas fa-sign-in-alt me-2"></i>Login to Request
