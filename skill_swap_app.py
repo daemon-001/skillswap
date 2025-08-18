@@ -82,6 +82,13 @@ def init_db():
         # Column already exists
         pass
     
+    # Add is_under_supervision column if it doesn't exist (for existing databases)
+    try:
+        cursor.execute('ALTER TABLE users ADD COLUMN is_under_supervision INTEGER DEFAULT 0')
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
     # Skills table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS skills (
@@ -214,6 +221,20 @@ def inject_unread_notifications():
         return {'unread_notifications': unread_count}
     return {'unread_notifications': 0}
 
+# Helper function to get user by ID
+def get_user_by_id(user_id):
+    conn = get_db()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    if user:
+        return convert_row_datetimes(user)
+    return None
+
+# Context processor to make get_user_by_id available in templates
+@app.context_processor
+def inject_helpers():
+    return {'get_user_by_id': get_user_by_id}
+
 # Routes
 @app.route('/')
 def index():
@@ -298,7 +319,8 @@ def index():
             'avg_rating': avg_rating,
             'total_ratings': total_ratings,
             'availability': user['availability'],
-            'bio': user['bio']
+            'bio': user['bio'],
+            'is_under_supervision': user['is_under_supervision']
         })
     # Define availability options for dropdown
     availabilities = ['available', 'unavailable']
@@ -675,6 +697,13 @@ def update_profile():
 @login_required
 def add_skill():
     try:
+        # Check if user is under supervision
+        conn = get_db()
+        user = conn.execute('SELECT is_under_supervision FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if user and user['is_under_supervision']:
+            flash('You are currently under supervision and cannot add new skills. Please contact an administrator.', 'warning')
+            return redirect(url_for('dashboard'))
+        
         skill_name = request.form.get('skill_name', '')
         skill_type = request.form.get('skill_type', '')
         description = request.form.get('description', '')
@@ -683,7 +712,6 @@ def add_skill():
             flash('Invalid skill data.', 'error')
             return redirect(url_for('dashboard'))
         
-        conn = get_db()
         conn.execute('''
             INSERT INTO skills (user_id, skill_name, skill_type, description)
             VALUES (?, ?, ?, ?)
@@ -698,6 +726,35 @@ def add_skill():
         flash(f'Error adding skill: {str(e)}', 'error')
         return redirect(url_for('dashboard'))
 
+@app.route('/delete_skill/<int:skill_id>')
+@login_required
+def delete_skill(skill_id):
+    try:
+        conn = get_db()
+        
+        # Check if user is under supervision
+        user = conn.execute('SELECT is_under_supervision FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if user and user['is_under_supervision']:
+            flash('You are currently under supervision and cannot delete skills. Please contact an administrator.', 'warning')
+            return redirect(url_for('dashboard'))
+        
+        # Verify the skill belongs to the current user
+        skill = conn.execute('SELECT * FROM skills WHERE id = ? AND user_id = ?', (skill_id, session['user_id'])).fetchone()
+        if not skill:
+            flash('Skill not found or you do not have permission to delete it.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        conn.execute('DELETE FROM skills WHERE id = ?', (skill_id,))
+        conn.commit()
+        conn.close()
+        
+        flash('Skill deleted successfully!', 'success')
+        return redirect(url_for('dashboard'))
+        
+    except Exception as e:
+        flash(f'Error deleting skill: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
 @app.route('/search')
 @login_required
 def search():
@@ -710,7 +767,7 @@ def search():
     
     # Build the query
     base_query = '''
-        SELECT s.*, u.name as user_name, u.location
+        SELECT s.*, u.name as user_name, u.location, u.is_under_supervision
         FROM skills s
         JOIN users u ON s.user_id = u.id
         WHERE s.skill_type = 'offered' 
@@ -766,7 +823,7 @@ def request_swap(skill_id):
     
     # Get the skill details
     skill = conn.execute('''
-        SELECT s.*, u.name as user_name
+        SELECT s.*, u.name as user_name, u.is_under_supervision
         FROM skills s
         JOIN users u ON s.user_id = u.id
         WHERE s.id = ?
@@ -774,6 +831,11 @@ def request_swap(skill_id):
     
     if not skill:
         flash('Skill not found.', 'error')
+        return redirect(url_for('search'))
+    
+    # Check if the skill provider is under supervision
+    if skill['is_under_supervision']:
+        flash('This user is currently under supervision and cannot receive swap requests.', 'warning')
         return redirect(url_for('search'))
     
     # Get user's offered skills
@@ -793,6 +855,13 @@ def request_swap(skill_id):
 @login_required
 def send_swap_request():
     try:
+        # Check if user is under supervision
+        conn = get_db()
+        user = conn.execute('SELECT is_under_supervision FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if user and user['is_under_supervision']:
+            flash('You are currently under supervision and cannot make swap requests. Please contact an administrator.', 'warning')
+            return redirect(url_for('search'))
+        
         offered_skill_id = request.form.get('offered_skill_id', '')
         wanted_skill_id = request.form.get('wanted_skill_id', '')
         message = request.form.get('message', '')
@@ -800,8 +869,6 @@ def send_swap_request():
         if not offered_skill_id or not wanted_skill_id:
             flash('Please select both skills for the swap.', 'error')
             return redirect(url_for('search'))
-        
-        conn = get_db()
         
         # Get provider ID from the wanted skill
         wanted_skill = conn.execute('SELECT user_id FROM skills WHERE id = ?', (wanted_skill_id,)).fetchone()
@@ -990,13 +1057,20 @@ def admin_dashboard():
         ORDER BY sr.created_at DESC LIMIT 5
     ''').fetchall()
     
+    # Users for Quick Message (non-admin, not banned)
+    users = conn.execute('''
+        SELECT id, name, email FROM users 
+        WHERE is_admin = 0 AND is_banned = 0
+        ORDER BY name ASC
+    ''').fetchall()
+    
     conn.close()
     
     # Convert datetime strings to datetime objects
     recent_users = convert_rows_datetimes(recent_users)
     recent_swaps = convert_rows_datetimes(recent_swaps)
     
-    return render_template('admin_dashboard.html', stats=stats, recent_users=recent_users, recent_swaps=recent_swaps)
+    return render_template('admin_dashboard.html', stats=stats, recent_users=recent_users, recent_swaps=recent_swaps, users=users)
 
 @app.route('/admin/users')
 @admin_required
@@ -1097,12 +1171,18 @@ def reject_skill(skill_id):
 def admin_messages():
     conn = get_db()
     messages = conn.execute('SELECT * FROM messages ORDER BY created_at DESC').fetchall()
+    # Fetch non-admin, non-banned users for quick message
+    users = conn.execute('''
+        SELECT id, name, email FROM users 
+        WHERE is_admin = 0 AND is_banned = 0
+        ORDER BY name ASC
+    ''').fetchall()
     conn.close()
     
     # Convert datetime strings to datetime objects
     messages = convert_rows_datetimes(messages)
     
-    return render_template('admin_messages.html', messages=messages)
+    return render_template('admin_messages.html', messages=messages, users=users)
 
 @app.route('/admin/send_message', methods=['POST'])
 @admin_required
@@ -1141,6 +1221,42 @@ def delete_message(message_id):
     conn.close()
     flash('Message deleted successfully!', 'success')
     return redirect(url_for('admin_messages'))
+
+@app.route('/admin/quick_message', methods=['POST'])
+@admin_required
+def quick_message():
+    try:
+        title = request.form.get('quick_title', '').strip()
+        message = request.form.get('quick_content', '').strip()
+        notif_type = request.form.get('quick_type', 'info').strip() or 'info'
+        recipient_ids = request.form.getlist('recipients')
+        
+        if not title or not message:
+            flash('Title and message are required for quick message.', 'error')
+            return redirect(url_for('admin_messages'))
+        if not recipient_ids:
+            flash('Please select at least one recipient.', 'warning')
+            return redirect(url_for('admin_messages'))
+        
+        # Insert notifications for each recipient
+        conn = get_db()
+        for rid in recipient_ids:
+            try:
+                uid = int(rid)
+                conn.execute('''
+                    INSERT INTO notifications (user_id, title, message, type)
+                    VALUES (?, ?, ?, ?)
+                ''', (uid, title, message, notif_type))
+            except ValueError:
+                continue
+        conn.commit()
+        conn.close()
+        
+        flash(f'Quick message sent to {len(recipient_ids)} user(s).', 'success')
+        return redirect(url_for('admin_messages'))
+    except Exception as e:
+        flash(f'Error sending quick message: {str(e)}', 'error')
+        return redirect(url_for('admin_messages'))
 
 # Report generation functions
 def generate_user_activity_report():
@@ -1415,6 +1531,11 @@ def request_from_user(user_id):
         flash('User not found or not available.', 'error')
         return redirect(url_for('index'))
     
+    # Check if the target user is under supervision
+    if user['is_under_supervision']:
+        flash('This user is currently under supervision and cannot receive swap requests.', 'warning')
+        return redirect(url_for('index'))
+    
     # Get all offered skills of this user
     offered_skills = conn.execute('''
         SELECT * FROM skills 
@@ -1504,6 +1625,26 @@ def delete_notification(notification_id):
     
     conn.close()
     return redirect(url_for('notifications'))
+
+@app.route('/admin/supervise_user/<int:user_id>')
+@admin_required
+def supervise_user(user_id):
+    conn = get_db()
+    conn.execute('UPDATE users SET is_under_supervision = 1 WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    flash('User placed under supervision.', 'warning')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/unsupervise_user/<int:user_id>')
+@admin_required
+def unsupervise_user(user_id):
+    conn = get_db()
+    conn.execute('UPDATE users SET is_under_supervision = 0 WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    flash('User removed from supervision.', 'success')
+    return redirect(url_for('admin_users'))
 
 if __name__ == '__main__':
     init_db()
