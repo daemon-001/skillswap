@@ -990,13 +990,20 @@ def admin_dashboard():
         ORDER BY sr.created_at DESC LIMIT 5
     ''').fetchall()
     
+    # Users for Quick Message (non-admin, not banned)
+    users = conn.execute('''
+        SELECT id, name, email FROM users 
+        WHERE is_admin = 0 AND is_banned = 0
+        ORDER BY name ASC
+    ''').fetchall()
+    
     conn.close()
     
     # Convert datetime strings to datetime objects
     recent_users = convert_rows_datetimes(recent_users)
     recent_swaps = convert_rows_datetimes(recent_swaps)
     
-    return render_template('admin_dashboard.html', stats=stats, recent_users=recent_users, recent_swaps=recent_swaps)
+    return render_template('admin_dashboard.html', stats=stats, recent_users=recent_users, recent_swaps=recent_swaps, users=users)
 
 @app.route('/admin/users')
 @admin_required
@@ -1097,12 +1104,18 @@ def reject_skill(skill_id):
 def admin_messages():
     conn = get_db()
     messages = conn.execute('SELECT * FROM messages ORDER BY created_at DESC').fetchall()
+    # Fetch non-admin, non-banned users for quick message
+    users = conn.execute('''
+        SELECT id, name, email FROM users 
+        WHERE is_admin = 0 AND is_banned = 0
+        ORDER BY name ASC
+    ''').fetchall()
     conn.close()
     
     # Convert datetime strings to datetime objects
     messages = convert_rows_datetimes(messages)
     
-    return render_template('admin_messages.html', messages=messages)
+    return render_template('admin_messages.html', messages=messages, users=users)
 
 @app.route('/admin/send_message', methods=['POST'])
 @admin_required
@@ -1141,6 +1154,42 @@ def delete_message(message_id):
     conn.close()
     flash('Message deleted successfully!', 'success')
     return redirect(url_for('admin_messages'))
+
+@app.route('/admin/quick_message', methods=['POST'])
+@admin_required
+def quick_message():
+    try:
+        title = request.form.get('quick_title', '').strip()
+        message = request.form.get('quick_content', '').strip()
+        notif_type = request.form.get('quick_type', 'info').strip() or 'info'
+        recipient_ids = request.form.getlist('recipients')
+        
+        if not title or not message:
+            flash('Title and message are required for quick message.', 'error')
+            return redirect(url_for('admin_messages'))
+        if not recipient_ids:
+            flash('Please select at least one recipient.', 'warning')
+            return redirect(url_for('admin_messages'))
+        
+        # Insert notifications for each recipient
+        conn = get_db()
+        for rid in recipient_ids:
+            try:
+                uid = int(rid)
+                conn.execute('''
+                    INSERT INTO notifications (user_id, title, message, type)
+                    VALUES (?, ?, ?, ?)
+                ''', (uid, title, message, notif_type))
+            except ValueError:
+                continue
+        conn.commit()
+        conn.close()
+        
+        flash(f'Quick message sent to {len(recipient_ids)} user(s).', 'success')
+        return redirect(url_for('admin_messages'))
+    except Exception as e:
+        flash(f'Error sending quick message: {str(e)}', 'error')
+        return redirect(url_for('admin_messages'))
 
 # Report generation functions
 def generate_user_activity_report():
