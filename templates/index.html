@@ -25,6 +25,68 @@
     </div>
 </section>
 
+<!-- Announcements Section -->
+{% if latest_announcement %}
+<section class="py-3">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="alert alert-info d-flex align-items-start mb-3" role="alert" data-no-autoclose="true">
+                    <div class="me-3">
+                        <i class="fas fa-bullhorn fa-lg"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">{{ latest_announcement.title }}</h5>
+                        <p class="mb-1">{{ latest_announcement.content }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ latest_announcement.created_at.strftime('%B %d, %Y at %I:%M %p') if latest_announcement.created_at else 'Recently' }}
+                        </small>
+                    </div>
+                    {% if old_announcements and old_announcements|length > 0 %}
+                    <div class="ms-3">
+                        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#announcementsModal" title="View previous announcements">
+                            <i class="fas fa-clock-rotate-left"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if old_announcements and old_announcements|length > 0 %}
+<div class="modal fade" id="announcementsModal" tabindex="-1" aria-labelledby="announcementsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="announcementsModalLabel">
+                    <i class="fas fa-bullhorn me-2"></i>Previous Announcements
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% for announcement in old_announcements %}
+                <div class="mb-4 pb-3 border-bottom">
+                    <h6 class="mb-1">{{ announcement.title }}</h6>
+                    <small class="text-muted d-block mb-2">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ announcement.created_at.strftime('%B %d, %Y at %I:%M %p') if announcement.created_at else 'Recently' }}
+                    </small>
+                    <p class="mb-0">{{ announcement.content }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Search and Filter Section -->
 <section class="py-5">
     <div class="container">

@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, false);
     });
 
-    // Auto-hide alerts after 5 seconds
-    const alerts = document.querySelectorAll('.alert');
+    // Auto-hide alerts after 5 seconds (skip persistent ones)
+    const alerts = document.querySelectorAll('.alert:not([data-no-autoclose])');
     alerts.forEach(alert => {
         setTimeout(() => {
             const bsAlert = new bootstrap.Alert(alert);

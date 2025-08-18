@@ -222,10 +222,14 @@ def index():
     availability = request.args.get('availability', '')
     q = request.args.get('q', '')
     conn = get_db()
-    # Get active announcements
-    announcements = conn.execute('''
-        SELECT * FROM messages WHERE is_active = 1 
-        ORDER BY created_at DESC LIMIT 3
+    # Get latest and older active announcements
+    latest_announcement = conn.execute('''
+        SELECT * FROM messages WHERE is_active = 1
+        ORDER BY created_at DESC LIMIT 1
+    ''').fetchone()
+    old_announcements = conn.execute('''
+        SELECT * FROM messages WHERE is_active = 1
+        ORDER BY created_at DESC LIMIT 10 OFFSET 1
     ''').fetchall()
 
     # Build user query with filters
@@ -301,7 +305,8 @@ def index():
     conn.close()
 
     # Convert datetime strings to datetime objects
-    announcements = convert_rows_datetimes(announcements)
+    latest_announcement = convert_row_datetimes(latest_announcement)
+    old_announcements = convert_rows_datetimes(old_announcements)
 
     pagination = {
         'page': page,
@@ -315,7 +320,7 @@ def index():
         'iter_pages': lambda: range(max(1, page - 2), min(total_pages + 1, page + 3))
     }
 
-    return render_template('index.html', announcements=announcements, user_profiles=user_profiles, pagination=pagination, availabilities=availabilities, selected_availability=availability, search_query=q)
+    return render_template('index.html', latest_announcement=latest_announcement, old_announcements=old_announcements, user_profiles=user_profiles, pagination=pagination, availabilities=availabilities, selected_availability=availability, search_query=q)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
