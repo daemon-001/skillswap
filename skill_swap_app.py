@@ -1132,6 +1132,16 @@ def toggle_message(message_id):
     flash(f'Message {status} successfully!', 'success')
     return redirect(url_for('admin_messages'))
 
+@app.route('/admin/delete_message/<int:message_id>')
+@admin_required
+def delete_message(message_id):
+    conn = get_db()
+    conn.execute('DELETE FROM messages WHERE id = ?', (message_id,))
+    conn.commit()
+    conn.close()
+    flash('Message deleted successfully!', 'success')
+    return redirect(url_for('admin_messages'))
+
 # Report generation functions
 def generate_user_activity_report():
     """Generate CSV report of user activity"""
