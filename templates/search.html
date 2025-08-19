@@ -109,7 +109,7 @@
                                 </small>
                             </div>
                             
-                            <div class="d-grid">
+                            <div class="d-grid gap-2">
                                 {% if session.user_id %}
                                     {% set current_user = get_user_by_id(session.user_id) %}
                                     {% if current_user and current_user.is_under_supervision %}
@@ -124,6 +124,9 @@
                                         <a href="{{ url_for('request_swap', skill_id=skill.id) }}" class="btn btn-primary">
                                             <i class="fas fa-exchange-alt me-2"></i>Request Swap
                                         </a>
+                                        <button onclick="openChatWithUser({{ skill.user_id }}, '{{ skill.user_name }}')" class="btn btn-success">
+                                            <i class="fas fa-comments me-2"></i>Send Message
+                                        </button>
                                     {% endif %}
                                 {% else %}
                                     <a href="{{ url_for('login') }}" class="btn btn-primary">

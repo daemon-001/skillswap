@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import csv
 import io
+import json
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
@@ -159,6 +160,35 @@ def init_db():
             is_read INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Chat conversations table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user1_id INTEGER NOT NULL,
+            user2_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user1_id) REFERENCES users (id),
+            FOREIGN KEY (user2_id) REFERENCES users (id),
+            UNIQUE(user1_id, user2_id)
+        )
+    ''')
+    
+    # Chat messages table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            message_type TEXT DEFAULT 'text', -- 'text', 'image', 'file', 'system'
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (conversation_id) REFERENCES chat_conversations (id),
+            FOREIGN KEY (sender_id) REFERENCES users (id)
         )
     ''')
     
@@ -1645,6 +1675,463 @@ def unsupervise_user(user_id):
     conn.close()
     flash('User removed from supervision.', 'success')
     return redirect(url_for('admin_users'))
+
+# Chat Routes
+@app.route('/chat')
+@login_required
+def chat():
+    """Main chat page"""
+    conn = get_db()
+    
+    # Get all conversations for the current user
+    conversations = conn.execute('''
+        SELECT 
+            c.*,
+            CASE 
+                WHEN c.user1_id = ? THEN c.user2_id 
+                ELSE c.user1_id 
+            END as other_user_id,
+            u.name as other_user_name,
+            u.profile_photo as other_user_photo,
+            (SELECT COUNT(*) FROM chat_messages 
+             WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) as unread_count
+        FROM chat_conversations c
+        JOIN users u ON (
+            CASE 
+                WHEN c.user1_id = ? THEN c.user2_id 
+                ELSE c.user1_id 
+            END = u.id
+        )
+        WHERE c.user1_id = ? OR c.user2_id = ?
+        ORDER BY c.last_message_at DESC
+    ''', (session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'])).fetchall()
+    
+    # Get all users for starting new conversations (excluding self, admins, and banned users)
+    users = conn.execute('''
+        SELECT id, name, profile_photo, is_admin, is_public, location, bio
+        FROM users 
+        WHERE id != ? AND is_banned = 0 AND is_public = 1
+        ORDER BY name ASC
+    ''', (session['user_id'],)).fetchall()
+    
+    conn.close()
+    
+    return render_template('chat.html', conversations=conversations, users=users)
+
+@app.route('/chat/conversation/<int:conversation_id>')
+@login_required
+def get_conversation(conversation_id):
+    """Get messages for a specific conversation"""
+    conn = get_db()
+    
+    # Verify user is part of this conversation and get conversation details
+    conversation = conn.execute('''
+        SELECT 
+            c.*,
+            CASE 
+                WHEN c.user1_id = ? THEN c.user2_id 
+                ELSE c.user1_id 
+            END as other_user_id,
+            u.name as other_user_name,
+            u.profile_photo as other_user_photo,
+            u.location as other_user_location,
+            u.bio as other_user_bio
+        FROM chat_conversations c
+        JOIN users u ON (
+            CASE 
+                WHEN c.user1_id = ? THEN c.user2_id 
+                ELSE c.user1_id 
+            END = u.id
+        )
+        WHERE c.id = ? AND (c.user1_id = ? OR c.user2_id = ?)
+    ''', (session['user_id'], session['user_id'], conversation_id, session['user_id'], session['user_id'])).fetchone()
+    
+    if not conversation:
+        return jsonify({'error': 'Conversation not found'}), 404
+    
+    # Get messages
+    messages = conn.execute('''
+        SELECT 
+            m.*,
+            u.name as sender_name,
+            u.profile_photo as sender_photo
+        FROM chat_messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.conversation_id = ?
+        ORDER BY m.created_at ASC
+    ''', (conversation_id,)).fetchall()
+    
+    # Mark messages as read
+    conn.execute('''
+        UPDATE chat_messages 
+        SET is_read = 1 
+        WHERE conversation_id = ? AND sender_id != ? AND is_read = 0
+    ''', (conversation_id, session['user_id']))
+    
+    conn.commit()
+    conn.close()
+    
+    # Convert to list of dicts
+    messages_list = []
+    for msg in messages:
+        # Convert relative photo path to full URL if it exists
+        sender_photo = msg['sender_photo']
+        if sender_photo and not sender_photo.startswith('http'):
+            if sender_photo.startswith('/'):
+                sender_photo = sender_photo
+            else:
+                sender_photo = f'/static/uploads/{sender_photo}'
+        
+        messages_list.append({
+            'id': msg['id'],
+            'sender_id': msg['sender_id'],
+            'sender_name': msg['sender_name'],
+            'sender_photo': sender_photo,
+            'message': msg['message'],
+            'message_type': msg['message_type'],
+            'created_at': msg['created_at'],
+            'is_own': msg['sender_id'] == session['user_id']
+        })
+    
+    # Convert relative photo path to full URL if it exists
+    other_user_photo = conversation['other_user_photo']
+    if other_user_photo and not other_user_photo.startswith('http'):
+        if other_user_photo.startswith('/'):
+            other_user_photo = other_user_photo
+        else:
+            other_user_photo = f'/static/uploads/{other_user_photo}'
+    
+    # Return both messages and conversation metadata
+    return jsonify({
+        'messages': messages_list,
+        'conversation': {
+            'id': conversation['id'],
+            'other_user_id': conversation['other_user_id'],
+            'other_user_name': conversation['other_user_name'],
+            'other_user_photo': other_user_photo,
+            'other_user_location': conversation['other_user_location'],
+            'other_user_bio': conversation['other_user_bio']
+        }
+    })
+
+@app.route('/chat/send_message', methods=['POST'])
+@login_required
+def send_chat_message():
+    """Send a new chat message"""
+    try:
+        data = request.get_json()
+        conversation_id = data.get('conversation_id')
+        message = data.get('message', '').strip()
+        
+        if not message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+        
+        conn = get_db()
+        
+        # Verify user is part of this conversation
+        conversation = conn.execute('''
+            SELECT * FROM chat_conversations 
+            WHERE id = ? AND (user1_id = ? OR user2_id = ?)
+        ''', (conversation_id, session['user_id'], session['user_id'])).fetchone()
+        
+        if not conversation:
+            return jsonify({'error': 'Conversation not found'}), 404
+        
+        # Insert message
+        cursor = conn.execute('''
+            INSERT INTO chat_messages (conversation_id, sender_id, message)
+            VALUES (?, ?, ?)
+        ''', (conversation_id, session['user_id'], message))
+        
+        message_id = cursor.lastrowid
+        
+        # Update conversation last_message_at
+        conn.execute('''
+            UPDATE chat_conversations 
+            SET last_message_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        ''', (conversation_id,))
+        
+        # Get message details
+        new_message = conn.execute('''
+            SELECT 
+                m.*,
+                u.name as sender_name,
+                u.profile_photo as sender_photo
+            FROM chat_messages m
+            JOIN users u ON m.sender_id = u.id
+            WHERE m.id = ?
+        ''', (message_id,)).fetchone()
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': {
+                'id': new_message['id'],
+                'sender_id': new_message['sender_id'],
+                'sender_name': new_message['sender_name'],
+                'sender_photo': new_message['sender_photo'],
+                'message': new_message['message'],
+                'message_type': new_message['message_type'],
+                'created_at': new_message['created_at'],
+                'is_own': True
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/chat/start_conversation', methods=['POST'])
+@login_required
+def start_conversation():
+    """Start a new conversation with a user"""
+    try:
+        data = request.get_json()
+        other_user_id = data.get('user_id')
+        
+        if not other_user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+        
+        conn = get_db()
+        
+        # Check if conversation already exists
+        existing = conn.execute('''
+            SELECT id FROM chat_conversations 
+            WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
+        ''', (session['user_id'], other_user_id, other_user_id, session['user_id'])).fetchone()
+        
+        if existing:
+            return jsonify({'conversation_id': existing['id']})
+        
+        # Create new conversation
+        cursor = conn.execute('''
+            INSERT INTO chat_conversations (user1_id, user2_id)
+            VALUES (?, ?)
+        ''', (session['user_id'], other_user_id))
+        
+        conversation_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'conversation_id': conversation_id})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/chat/admin_message', methods=['POST'])
+@admin_required
+def send_admin_message():
+    """Send a message to a specific user as admin"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        message = data.get('message', '').strip()
+        
+        if not message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+        
+        conn = get_db()
+        
+        # Check if conversation exists, create if not
+        conversation = conn.execute('''
+            SELECT id FROM chat_conversations 
+            WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
+        ''', (session['user_id'], user_id, user_id, session['user_id'])).fetchone()
+        
+        if conversation:
+            conversation_id = conversation['id']
+        else:
+            # Create new conversation
+            cursor = conn.execute('''
+                INSERT INTO chat_conversations (user1_id, user2_id)
+                VALUES (?, ?)
+            ''', (session['user_id'], user_id))
+            conversation_id = cursor.lastrowid
+        
+        # Insert message
+        cursor = conn.execute('''
+            INSERT INTO chat_messages (conversation_id, sender_id, message, message_type)
+            VALUES (?, ?, ?, 'system')
+        ''', (conversation_id, session['user_id'], message))
+        
+        # Update conversation last_message_at
+        conn.execute('''
+            UPDATE chat_conversations 
+            SET last_message_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        ''', (conversation_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'conversation_id': conversation_id})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/chat/unread_count')
+@login_required
+def get_unread_count():
+    """Get total unread message count for the user"""
+    conn = get_db()
+    unread_count = conn.execute('''
+        SELECT COUNT(*) as count FROM chat_messages cm
+        JOIN chat_conversations c ON cm.conversation_id = c.id
+        WHERE (c.user1_id = ? OR c.user2_id = ?) 
+        AND cm.sender_id != ? AND cm.is_read = 0
+    ''', (session['user_id'], session['user_id'], session['user_id'])).fetchone()['count']
+    conn.close()
+    
+    return jsonify({'unread_count': unread_count})
+
+@app.route('/chat/users')
+@login_required
+def get_chat_users():
+    """Get all available users for chat"""
+    conn = get_db()
+    
+    # Get all users for starting new conversations (excluding self, admins, and banned users)
+    users = conn.execute('''
+        SELECT id, name, profile_photo, is_admin, is_public, location, bio
+        FROM users 
+        WHERE id != ? AND is_banned = 0
+        ORDER BY name ASC
+    ''', (session['user_id'],)).fetchall()
+    
+    conn.close()
+    
+    # Convert to list of dicts
+    users_list = []
+    for user in users:
+        # Convert relative photo path to full URL if it exists
+        profile_photo = user['profile_photo']
+        if profile_photo and not profile_photo.startswith('http'):
+            if profile_photo.startswith('/'):
+                profile_photo = profile_photo
+            else:
+                profile_photo = f'/static/uploads/{profile_photo}'
+        
+        users_list.append({
+            'id': user['id'],
+            'name': user['name'],
+            'profile_photo': profile_photo,
+            'location': user['location'],
+            'bio': user['bio']
+        })
+    
+    return jsonify({'users': users_list})
+
+@app.route('/chat/conversations')
+@login_required
+def get_chat_conversations():
+    """Get all conversations for the current user that have actual messages"""
+    conn = get_db()
+    
+    # Get conversations with actual messages for the current user
+    conversations = conn.execute('''
+        SELECT 
+            c.*,
+            CASE 
+                WHEN c.user1_id = ? THEN c.user2_id 
+                ELSE c.user1_id 
+            END as other_user_id,
+            u.name as other_user_name,
+            u.profile_photo as other_user_photo,
+            (SELECT COUNT(*) FROM chat_messages 
+             WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) as unread_count,
+            (SELECT message FROM chat_messages 
+             WHERE conversation_id = c.id 
+             ORDER BY created_at DESC 
+             LIMIT 1) as last_message
+        FROM chat_conversations c
+        JOIN users u ON (
+            CASE 
+                WHEN c.user1_id = ? THEN c.user2_id 
+                ELSE c.user1_id 
+            END = u.id
+        )
+        WHERE (c.user1_id = ? OR c.user2_id = ?)
+        AND EXISTS (
+            SELECT 1 FROM chat_messages 
+            WHERE conversation_id = c.id
+        )
+        ORDER BY c.last_message_at DESC
+    ''', (session['user_id'], session['user_id'], session['user_id'], session['user_id'], session['user_id'])).fetchall()
+    
+    conn.close()
+    
+    # Convert to list of dicts
+    conversations_list = []
+    for conv in conversations:
+        # Convert relative photo path to full URL if it exists
+        other_user_photo = conv['other_user_photo']
+        if other_user_photo and not other_user_photo.startswith('http'):
+            if other_user_photo.startswith('/'):
+                other_user_photo = other_user_photo
+            else:
+                other_user_photo = f'/static/uploads/{other_user_photo}'
+        
+        conversations_list.append({
+            'id': conv['id'],
+            'other_user_id': conv['other_user_id'],
+            'other_user_name': conv['other_user_name'],
+            'other_user_photo': other_user_photo,
+            'unread_count': conv['unread_count'],
+            'last_message_at': conv['last_message_at'],
+            'last_message': conv['last_message']
+        })
+    
+    return jsonify({'conversations': conversations_list})
+
+@app.route('/chat/notifications')
+@login_required
+def get_chat_notifications():
+    """Get notifications for the chat interface"""
+    conn = get_db()
+    
+    # Get unread notifications
+    notifications = conn.execute('''
+        SELECT * FROM notifications 
+        WHERE user_id = ? AND is_read = 0
+        ORDER BY created_at DESC
+        LIMIT 10
+    ''', (session['user_id'],)).fetchall()
+    
+    # Get active announcements
+    announcements = conn.execute('''
+        SELECT * FROM messages 
+        WHERE is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 5
+    ''').fetchall()
+    
+    conn.close()
+    
+    notifications_list = []
+    for notif in notifications:
+        notifications_list.append({
+            'id': notif['id'],
+            'title': notif['title'],
+            'message': notif['message'],
+            'type': notif['type'],
+            'created_at': notif['created_at']
+        })
+    
+    announcements_list = []
+    for ann in announcements:
+        announcements_list.append({
+            'id': ann['id'],
+            'title': ann['title'],
+            'content': ann['content'],
+            'created_at': ann['created_at']
+        })
+    
+    return jsonify({
+        'notifications': notifications_list,
+        'announcements': announcements_list
+    })
 
 if __name__ == '__main__':
     init_db()

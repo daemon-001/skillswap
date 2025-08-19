@@ -115,9 +115,16 @@
                     
                     {% if can_request %}
                     <div class="text-center mt-4">
-                        <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-handshake me-2"></i>Request Skill Swap
-                        </a>
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-handshake me-2"></i>Request Skill Swap
+                            </a>
+                            {% if session.user_id and session.user_id != user.id %}
+                            <button onclick="openChatWithUser({{ user.id }}, '{{ user.name }}')" class="btn btn-success btn-lg">
+                                <i class="fas fa-comments me-2"></i>Send Message
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endif %}
                 </div>

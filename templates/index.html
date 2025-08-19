@@ -238,8 +238,8 @@
                         </div>
                         {% endif %}
 
-                        <!-- Action Button -->
-                        <div class="d-grid">
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
                             {% if session.user_id %}
                                 {% if user.is_under_supervision %}
                                     <button class="btn btn-secondary" disabled title="This user is under supervision and cannot receive swap requests">
@@ -249,6 +249,9 @@
                                     <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary">
                                         <i class="fas fa-handshake me-2"></i>Request Swap
                                     </a>
+                                    <button onclick="openChatWithUser({{ user.id }}, '{{ user.name }}')" class="btn btn-success">
+                                        <i class="fas fa-comments me-2"></i>Send Message
+                                    </button>
                                 {% endif %}
                             {% else %}
                                 <a href="{{ url_for('login', from_request='true') }}" class="btn btn-primary">
