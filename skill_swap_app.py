@@ -40,7 +40,7 @@ def convert_row_datetimes(row):
         row_dict = row
     
     # Convert timestamp fields to datetime objects
-    timestamp_fields = ['created_at', 'updated_at']
+    timestamp_fields = ['created_at', 'updated_at', 'rejected_at']
     for field in timestamp_fields:
         if field in row_dict and row_dict[field]:
             row_dict[field] = parse_datetime(row_dict[field])
@@ -90,6 +90,25 @@ def init_db():
         # Column already exists
         pass
     
+    # Add rejection tracking columns to skills table
+    try:
+        cursor.execute('ALTER TABLE skills ADD COLUMN is_rejected INTEGER DEFAULT 0')
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE skills ADD COLUMN rejection_reason TEXT')
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE skills ADD COLUMN rejected_at TIMESTAMP')
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
     # Skills table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS skills (
@@ -98,11 +117,18 @@ def init_db():
             skill_name TEXT NOT NULL,
             skill_type TEXT NOT NULL, -- 'offered' or 'wanted'
             description TEXT,
-            is_approved INTEGER DEFAULT 1,
+            is_approved INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
+    
+    # Update existing skills table default for new skills (for existing databases)
+    try:
+        cursor.execute('ALTER TABLE skills ALTER COLUMN is_approved SET DEFAULT 0')
+    except sqlite3.OperationalError:
+        # Not all SQLite versions support ALTER COLUMN, so we'll handle this in the insert statement
+        pass
     
     # Swap requests table
     cursor.execute('''
@@ -291,7 +317,7 @@ def index():
     elif availability == 'unavailable':
         user_query += ' AND (availability IS NULL OR availability = "")'
     if q:
-        user_query += ' AND (name LIKE ? OR id IN (SELECT user_id FROM skills WHERE skill_name LIKE ?))'
+        user_query += ' AND (name LIKE ? OR id IN (SELECT user_id FROM skills WHERE skill_name LIKE ? AND is_rejected = 0))'
         params.append(f'%{q}%')
         params.append(f'%{q}%')
     # Exclude current user if logged in
@@ -310,7 +336,7 @@ def index():
     elif availability == 'unavailable':
         count_query += ' AND (availability IS NULL OR availability = "")'
     if q:
-        count_query += ' AND (name LIKE ? OR id IN (SELECT user_id FROM skills WHERE skill_name LIKE ?))'
+        count_query += ' AND (name LIKE ? OR id IN (SELECT user_id FROM skills WHERE skill_name LIKE ? AND is_rejected = 0))'
         count_params.append(f'%{q}%')
         count_params.append(f'%{q}%')
     # Exclude current user if logged in
@@ -324,8 +350,8 @@ def index():
     user_profiles = []
     for user in users:
         user_id = user['id']
-        offered_skills = conn.execute('''SELECT skill_name FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1''', (user_id,)).fetchall()
-        wanted_skills = conn.execute('''SELECT skill_name FROM skills WHERE user_id = ? AND skill_type = 'wanted' AND is_approved = 1''', (user_id,)).fetchall()
+        offered_skills = conn.execute('''SELECT skill_name FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1 AND is_rejected = 0''', (user_id,)).fetchall()
+        wanted_skills = conn.execute('''SELECT skill_name FROM skills WHERE user_id = ? AND skill_type = 'wanted' AND is_approved = 1 AND is_rejected = 0''', (user_id,)).fetchall()
         rating_data = conn.execute('''SELECT AVG(rating) as avg_rating, COUNT(*) as total_ratings FROM ratings WHERE rated_id = ?''', (user_id,)).fetchone()
         avg_rating = rating_data['avg_rating']
         total_ratings = rating_data['total_ratings']
@@ -462,13 +488,18 @@ def dashboard():
         flash('User session invalid. Please log in again.', 'error')
         return redirect(url_for('login'))
     
-    # Get user's skills
+    # Get user's skills (exclude rejected)
     offered_skills = conn.execute('''
-        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered'
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_rejected = 0
     ''', (session['user_id'],)).fetchall()
     
     wanted_skills = conn.execute('''
-        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'wanted'
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'wanted' AND is_rejected = 0
+    ''', (session['user_id'],)).fetchall()
+    
+    # Get rejected skills
+    rejected_skills = conn.execute('''
+        SELECT * FROM skills WHERE user_id = ? AND is_rejected = 1 ORDER BY rejected_at DESC
     ''', (session['user_id'],)).fetchall()
     
     # Get swap requests
@@ -520,10 +551,16 @@ def dashboard():
         'completed_swaps': len([r for r in all_requests if r and r.get('status') == 'accepted'])
     }
     
+    # Convert datetime strings to datetime objects
+    offered_skills = convert_rows_datetimes(offered_skills)
+    wanted_skills = convert_rows_datetimes(wanted_skills)
+    rejected_skills = convert_rows_datetimes(rejected_skills)
+    
     return render_template('dashboard.html', 
                          user=user,
                          offered_skills=offered_skills, 
                          wanted_skills=wanted_skills,
+                         rejected_skills=rejected_skills,
                          swap_requests=all_requests,
                          stats=stats,
                          unread_notifications=unread_notifications)
@@ -534,13 +571,13 @@ def profile():
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     
-    # Get user's skills
+    # Get user's skills (exclude rejected)
     offered_skills = conn.execute('''
-        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered'
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_rejected = 0
     ''', (session['user_id'],)).fetchall()
     
     wanted_skills = conn.execute('''
-        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'wanted'
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'wanted' AND is_rejected = 0
     ''', (session['user_id'],)).fetchall()
     
     # Get user stats
@@ -783,17 +820,74 @@ def add_skill():
             return redirect(url_for('dashboard'))
         
         conn.execute('''
-            INSERT INTO skills (user_id, skill_name, skill_type, description)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO skills (user_id, skill_name, skill_type, description, is_approved)
+            VALUES (?, ?, ?, ?, 0)
         ''', (session['user_id'], skill_name, skill_type, description))
         conn.commit()
         conn.close()
         
-        flash('Skill added successfully!', 'success')
+        flash('Skill submitted for review! It will be visible after admin approval.', 'info')
         return redirect(url_for('dashboard'))
         
     except Exception as e:
         flash(f'Error adding skill: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/resubmit_skill/<int:skill_id>', methods=['POST'])
+@login_required
+def resubmit_skill(skill_id):
+    try:
+        conn = get_db()
+        
+        # Check if the skill belongs to the current user and is rejected
+        skill = conn.execute('''
+            SELECT user_id, is_rejected FROM skills WHERE id = ?
+        ''', (skill_id,)).fetchone()
+        
+        if not skill or skill['user_id'] != session['user_id']:
+            flash('You can only edit your own skills.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        if not skill['is_rejected']:
+            flash('This skill is not rejected and cannot be resubmitted.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        # Check if user is under supervision
+        user = conn.execute('SELECT is_under_supervision FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if user and user['is_under_supervision']:
+            flash('You are currently under supervision and cannot resubmit skills. Please contact an administrator.', 'warning')
+            return redirect(url_for('dashboard'))
+        
+        skill_name = request.form.get('skill_name', '').strip()
+        skill_type = request.form.get('skill_type', '')
+        description = request.form.get('description', '').strip()
+        
+        if not skill_name or skill_type not in ['offered', 'wanted']:
+            flash('Invalid skill data.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        # Update the skill and reset rejection status (but require approval again)
+        conn.execute('''
+            UPDATE skills 
+            SET skill_name = ?, 
+                skill_type = ?, 
+                description = ?, 
+                is_rejected = 0, 
+                is_approved = 0, 
+                rejection_reason = NULL, 
+                rejected_at = NULL,
+                created_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (skill_name, skill_type, description, skill_id))
+        
+        conn.commit()
+        conn.close()
+        
+        flash('Skill resubmitted for review! It will be visible after admin approval.', 'info')
+        return redirect(url_for('dashboard'))
+        
+    except Exception as e:
+        flash(f'Error resubmitting skill: {str(e)}', 'error')
         return redirect(url_for('dashboard'))
 
 @app.route('/delete_skill/<int:skill_id>')
@@ -802,17 +896,18 @@ def delete_skill(skill_id):
     try:
         conn = get_db()
         
-        # Check if user is under supervision
-        user = conn.execute('SELECT is_under_supervision FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-        if user and user['is_under_supervision']:
-            flash('You are currently under supervision and cannot delete skills. Please contact an administrator.', 'warning')
-            return redirect(url_for('dashboard'))
-        
         # Verify the skill belongs to the current user
         skill = conn.execute('SELECT * FROM skills WHERE id = ? AND user_id = ?', (skill_id, session['user_id'])).fetchone()
         if not skill:
             flash('Skill not found or you do not have permission to delete it.', 'error')
             return redirect(url_for('dashboard'))
+        
+        # Check if user is under supervision (only for non-rejected skills)
+        if not skill['is_rejected']:
+            user = conn.execute('SELECT is_under_supervision FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+            if user and user['is_under_supervision']:
+                flash('You are currently under supervision and cannot delete skills. Please contact an administrator.', 'warning')
+                return redirect(url_for('dashboard'))
         
         conn.execute('DELETE FROM skills WHERE id = ?', (skill_id,))
         conn.commit()
@@ -842,7 +937,7 @@ def search():
         JOIN users u ON s.user_id = u.id
         WHERE s.skill_type = 'offered' 
         AND u.is_public = 1 AND u.is_banned = 0 AND u.id != ?
-        AND s.is_approved = 1
+        AND s.is_approved = 1 AND s.is_rejected = 0
     '''
     
     params = [session['user_id']]
@@ -908,9 +1003,9 @@ def request_swap(skill_id):
         flash('This user is currently under supervision and cannot receive swap requests.', 'warning')
         return redirect(url_for('search'))
     
-    # Get user's offered skills
+    # Get user's offered skills (exclude rejected)
     user_skills = conn.execute('''
-        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered'
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_rejected = 0
     ''', (session['user_id'],)).fetchall()
     
     conn.close()
@@ -1113,7 +1208,7 @@ def admin_dashboard():
     # Get statistics
     stats = {}
     stats['total_users'] = conn.execute('SELECT COUNT(*) as count FROM users WHERE is_admin = 0').fetchone()['count']
-    stats['total_skills'] = conn.execute('SELECT COUNT(*) as count FROM skills').fetchone()['count']
+    stats['total_skills'] = conn.execute('SELECT COUNT(*) as count FROM skills WHERE is_rejected = 0').fetchone()['count']
     stats['pending_swaps'] = conn.execute('SELECT COUNT(*) as count FROM swap_requests WHERE status = "pending"').fetchone()['count']
     stats['completed_swaps'] = conn.execute('SELECT COUNT(*) as count FROM swap_requests WHERE status = "accepted"').fetchone()['count']
     
@@ -1162,7 +1257,8 @@ def admin_skills():
         SELECT s.*, u.name as user_name, u.email
         FROM skills s
         JOIN users u ON s.user_id = u.id
-        ORDER BY s.id DESC
+        WHERE s.is_rejected = 0
+        ORDER BY s.is_approved ASC, s.id DESC
     ''').fetchall()
     conn.close()
     
@@ -1206,7 +1302,7 @@ def approve_skill(skill_id):
 def reject_skill(skill_id):
     conn = get_db()
     
-    # Get skill details before deleting
+    # Get skill details before marking as rejected
     skill = conn.execute('''
         SELECT s.*, u.name as user_name, u.email 
         FROM skills s 
@@ -1218,12 +1314,20 @@ def reject_skill(skill_id):
         flash('Skill not found.', 'error')
         return redirect(url_for('admin_skills'))
     
-    # Delete the skill
-    conn.execute('DELETE FROM skills WHERE id = ?', (skill_id,))
+    # Mark skill as rejected instead of deleting
+    default_reason = "This skill did not meet our community guidelines. Please review the guidelines and consider resubmitting with improvements."
+    conn.execute('''
+        UPDATE skills 
+        SET is_rejected = 1, 
+            is_approved = 0, 
+            rejection_reason = ?, 
+            rejected_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+    ''', (default_reason, skill_id))
     
     # Create notification for the user
     notification_title = "Skill Rejected"
-    notification_message = f"Your skill '{skill['skill_name']}' has been rejected by an administrator. Please review our community guidelines and consider adding a different skill."
+    notification_message = f"Your skill '{skill['skill_name']}' has been rejected by an administrator.\n\nReason: {default_reason}\n\nYou can view your rejected skills in your dashboard and edit them for resubmission."
     
     conn.execute('''
         INSERT INTO notifications (user_id, title, message, type) 
@@ -1235,6 +1339,60 @@ def reject_skill(skill_id):
     
     flash(f'Skill "{skill["skill_name"]}" rejected and user notified.', 'warning')
     return redirect(url_for('admin_skills'))
+
+@app.route('/admin/reject_skill_with_reason', methods=['POST'])
+@admin_required
+def reject_skill_with_reason():
+    try:
+        skill_id = request.form.get('skill_id')
+        rejection_reason = request.form.get('rejection_reason', '').strip()
+        
+        if not skill_id or not rejection_reason:
+            flash('Skill ID and rejection reason are required.', 'error')
+            return redirect(url_for('admin_skills'))
+        
+        conn = get_db()
+        
+        # Get skill details before marking as rejected
+        skill = conn.execute('''
+            SELECT s.*, u.name as user_name, u.email 
+            FROM skills s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.id = ?
+        ''', (skill_id,)).fetchone()
+        
+        if not skill:
+            flash('Skill not found.', 'error')
+            return redirect(url_for('admin_skills'))
+        
+        # Mark skill as rejected instead of deleting
+        conn.execute('''
+            UPDATE skills 
+            SET is_rejected = 1, 
+                is_approved = 0, 
+                rejection_reason = ?, 
+                rejected_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        ''', (rejection_reason, skill_id))
+        
+        # Create notification for the user with custom reason
+        notification_title = "Skill Rejected"
+        notification_message = f"Your skill '{skill['skill_name']}' has been rejected by an administrator.\n\nReason: {rejection_reason}\n\nYou can view your rejected skills in your dashboard and edit them for resubmission. Please review our community guidelines before resubmitting."
+        
+        conn.execute('''
+            INSERT INTO notifications (user_id, title, message, type) 
+            VALUES (?, ?, ?, ?)
+        ''', (skill['user_id'], notification_title, notification_message, 'warning'))
+        
+        conn.commit()
+        conn.close()
+        
+        flash(f'Skill "{skill["skill_name"]}" rejected with custom reason and user notified.', 'warning')
+        return redirect(url_for('admin_skills'))
+        
+    except Exception as e:
+        flash(f'Error rejecting skill: {str(e)}', 'error')
+        return redirect(url_for('admin_skills'))
 
 @app.route('/admin/messages')
 @admin_required
@@ -1606,19 +1764,19 @@ def request_from_user(user_id):
         flash('This user is currently under supervision and cannot receive swap requests.', 'warning')
         return redirect(url_for('index'))
     
-    # Get all offered skills of this user
+    # Get all offered skills of this user (exclude rejected)
     offered_skills = conn.execute('''
         SELECT * FROM skills 
-        WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1
+        WHERE user_id = ? AND skill_type = 'offered' AND is_approved = 1 AND is_rejected = 0
     ''', (user_id,)).fetchall()
     
     if not offered_skills:
         flash('This user has no skills available for swapping.', 'warning')
         return redirect(url_for('index'))
     
-    # Get current user's offered skills
+    # Get current user's offered skills (exclude rejected)
     user_skills = conn.execute('''
-        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered'
+        SELECT * FROM skills WHERE user_id = ? AND skill_type = 'offered' AND is_rejected = 0
     ''', (session['user_id'],)).fetchall()
     
     conn.close()
@@ -2172,6 +2330,28 @@ def get_chat_notifications():
         'notifications': notifications_list,
         'announcements': announcements_list
     })
+
+@app.route('/debug/rejected_skills')
+@login_required
+def debug_rejected_skills():
+    """Debug route to check rejected skills in database"""
+    if not session.get('is_admin'):
+        return "Access denied", 403
+    
+    conn = get_db()
+    all_skills = conn.execute('''
+        SELECT s.*, u.name as user_name 
+        FROM skills s 
+        JOIN users u ON s.user_id = u.id 
+        ORDER BY s.id DESC
+    ''').fetchall()
+    conn.close()
+    
+    html = "<h2>All Skills Debug</h2><table border='1'><tr><th>ID</th><th>Name</th><th>User</th><th>Is Rejected</th><th>Rejection Reason</th><th>Rejected At</th></tr>"
+    for skill in all_skills:
+        html += f"<tr><td>{skill['id']}</td><td>{skill['skill_name']}</td><td>{skill['user_name']}</td><td>{skill.get('is_rejected', 'N/A')}</td><td>{skill.get('rejection_reason', 'N/A')}</td><td>{skill.get('rejected_at', 'N/A')}</td></tr>"
+    html += "</table>"
+    return html
 
 if __name__ == '__main__':
     init_db()

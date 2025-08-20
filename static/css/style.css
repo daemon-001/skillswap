@@ -1579,4 +1579,27 @@ a:hover {
 .availability-schedule .form-check-label {
     color: var(--gray-700);
     font-weight: 500;
+}
+
+/* Rejected Skills Section */
+.skill-card.rejected {
+    background-color: #fdf2f2;
+    border-left: 4px solid #dc3545;
+}
+
+.skill-card.rejected .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+    font-size: 0.9rem;
+}
+
+.rejected-skills-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.rejected-skills-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
 } 
