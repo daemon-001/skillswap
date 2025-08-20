@@ -97,7 +97,7 @@
                         <form method="get" class="row g-3">
                             <div class="col-md-4">
                                 <label for="availability" class="form-label">Filter by Availability</label>
-                                <select class="form-select" id="availability" name="availability">
+                                <select class="form-select" id="availability" name="availability" onchange="this.form.submit()">
                                     <option value="">All Users</option>
                                     <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>
                                         Available Users
@@ -109,7 +109,8 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="search" class="form-label">Search Users</label>
-                                <input type="text" class="form-control" id="search" name="q" placeholder="Search by name or skills..." value="{{ search_query or '' }}">
+                                <input type="text" class="form-control" id="search" name="q" placeholder="Search by name or skills..." value="{{ search_query or '' }}"
+                                       onkeypress="if(event.keyCode==13) this.form.submit()">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">&nbsp;</label>
@@ -241,11 +242,7 @@
                         <!-- Action Buttons -->
                         <div class="d-grid gap-2">
                             {% if session.user_id %}
-                                {% if user.is_under_supervision %}
-                                    <button class="btn btn-secondary" disabled title="This user is under supervision and cannot receive swap requests">
-                                        <i class="fas fa-user-shield me-2"></i>Under Supervision
-                                    </button>
-                                {% else %}
+                                {% if not user.is_under_supervision %}
                                     <a href="{{ url_for('request_from_user', user_id=user.id) }}" class="btn btn-primary">
                                         <i class="fas fa-handshake me-2"></i>Request Swap
                                     </a>
@@ -259,6 +256,15 @@
                                 </a>
                             {% endif %}
                         </div>
+                        
+                        <!-- Under Supervision Status -->
+                        {% if user.is_under_supervision %}
+                        <div class="mt-2">
+                            <button class="btn btn-secondary w-100" disabled title="This user is under supervision and cannot receive swap requests">
+                                <i class="fas fa-user-shield me-2"></i>Under Supervision
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

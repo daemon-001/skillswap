@@ -1443,4 +1443,97 @@ a:hover {
 
 .chat-interface ::-webkit-scrollbar-thumb:hover {
     background: var(--gray-400);
+}
+
+/* Auto-filter Loading States */
+.form-loading .btn[type="submit"] {
+    position: relative;
+    overflow: hidden;
+}
+
+.form-loading .btn[type="submit"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.form-loading .btn[type="submit"] .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Filter transition effects */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+    transition: all 0.2s ease;
+}
+
+/* Smooth transitions for filter changes */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Availability Schedule Styling */
+.availability-schedule {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    background-color: var(--gray-50);
+}
+
+.availability-day {
+    border-bottom: 1px solid var(--gray-100);
+    padding-bottom: var(--spacing-sm);
+}
+
+.availability-day:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.availability-day .form-check {
+    margin-bottom: var(--spacing-xs);
+}
+
+.availability-day .form-check-label {
+    color: var(--gray-700);
+    font-weight: 600;
+}
+
+.time-range-section {
+    background-color: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.time-range-section .form-control {
+    border: 1px solid var(--gray-300);
+    font-size: 0.9rem;
+}
+
+.time-range-section .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+}
+
+/* Day selection styling */
+.availability-schedule .form-check {
+    margin-bottom: var(--spacing-xs);
+}
+
+.availability-schedule .form-check-label {
+    color: var(--gray-700);
+    font-weight: 500;
 } 

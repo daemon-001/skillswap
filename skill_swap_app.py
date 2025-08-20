@@ -298,7 +298,7 @@ def index():
     if 'user_id' in session:
         user_query += ' AND id != ?'
         params.append(session['user_id'])
-    user_query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    user_query += ' ORDER BY is_under_supervision ASC, created_at DESC LIMIT ? OFFSET ?'
     params.extend([per_page, (page - 1) * per_page])
     users = conn.execute(user_query, params).fetchall()
 
@@ -662,17 +662,57 @@ def update_profile():
         bio = request.form.get('bio', '')
         is_public = 1 if request.form.get('is_public') == 'on' else 0
         
-        # Handle availability switch and details
-        is_available = request.form.get('is_available') == 'on'
-        availability_details = request.form.get('availability_details', '')
+        # Handle availability from day selection and single time range
+        selected_days = request.form.getlist('days[]')
+        start_time = request.form.get('start_time', '')
+        end_time = request.form.get('end_time', '')
+        availability = ""
         
-        # Set availability based on switch and details
-        if is_available and availability_details:
-            availability = availability_details
-        elif is_available:
-            availability = "Available for skill swaps"
-        else:
-            availability = ""
+        if selected_days:
+            # Smart day formatting - check if days are in sequence
+            day_order = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            selected_days_sorted = sorted(selected_days, key=lambda x: day_order.index(x))
+            
+            # Check if selected days form a continuous sequence
+            def is_continuous_sequence(days):
+                if len(days) < 2:
+                    return False
+                
+                # Find the starting index in the day order
+                start_idx = day_order.index(days[0])
+                
+                # Check if all selected days are consecutive in the order
+                for i, day in enumerate(days):
+                    if day_order[start_idx + i] != day:
+                        return False
+                return True
+            
+            # Format days display
+            if is_continuous_sequence(selected_days_sorted):
+                # Days are in sequence, show as "Monday to Friday"
+                first_day = selected_days_sorted[0].title()
+                last_day = selected_days_sorted[-1].title()
+                day_display = f"{first_day} to {last_day}"
+            else:
+                # Days are not in sequence, show as "Monday, Wednesday, Sunday"
+                day_display = ', '.join([day.title() for day in selected_days_sorted])
+            
+            if start_time and end_time:
+                # Format time for display (e.g., "4:30 AM to 7:00 PM")
+                start_formatted = datetime.strptime(start_time, '%H:%M').strftime('%I:%M %p')
+                end_formatted = datetime.strptime(end_time, '%H:%M').strftime('%I:%M %p')
+                availability = f"{day_display} {start_formatted} to {end_formatted}"
+            elif start_time:
+                # Only start time provided
+                start_formatted = datetime.strptime(start_time, '%H:%M').strftime('%I:%M %p')
+                availability = f"{day_display} from {start_formatted}"
+            elif end_time:
+                # Only end time provided
+                end_formatted = datetime.strptime(end_time, '%H:%M').strftime('%I:%M %p')
+                availability = f"{day_display} until {end_formatted}"
+            else:
+                # No time specified
+                availability = f"{day_display} (anytime)"
         
         if not name:
             flash('Name is required.', 'error')
@@ -820,7 +860,7 @@ def search():
     total = conn.execute(count_query, params).fetchone()['count']
     
     # Add pagination
-    base_query += ' ORDER BY s.created_at DESC LIMIT ? OFFSET ?'
+    base_query += ' ORDER BY u.is_under_supervision ASC, s.created_at DESC LIMIT ? OFFSET ?'
     params.extend([per_page, (page - 1) * per_page])
     
     results = conn.execute(base_query, params).fetchall()

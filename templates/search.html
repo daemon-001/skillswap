@@ -40,11 +40,12 @@
                     <div class="col-md-6">
                         <label for="q" class="form-label">Search Skills</label>
                         <input type="text" class="form-control" id="q" name="q" 
-                               placeholder="Enter skill name..." value="{{ query or '' }}">
+                               placeholder="Enter skill name..." value="{{ query or '' }}"
+                               onkeypress="if(event.keyCode==13) this.form.submit()">
                     </div>
                     <div class="col-md-3">
                         <label for="skill_type" class="form-label">Skill Type</label>
-                        <select class="form-select" id="skill_type" name="skill_type">
+                        <select class="form-select" id="skill_type" name="skill_type" onchange="this.form.submit()">
                             <option value="">All Types</option>
                             <option value="offered" {% if skill_type == 'offered' %}selected{% endif %}>Offered</option>
                             <option value="wanted" {% if skill_type == 'wanted' %}selected{% endif %}>Wanted</option>
@@ -116,11 +117,7 @@
                                         <button class="btn btn-primary" disabled title="Cannot make swap requests while under supervision">
                                             <i class="fas fa-exchange-alt me-2"></i>Request Swap (Disabled)
                                         </button>
-                                    {% elif skill.is_under_supervision %}
-                                        <button class="btn btn-secondary" disabled title="This user is under supervision and cannot receive swap requests">
-                                            <i class="fas fa-user-shield me-2"></i>Under Supervision
-                                        </button>
-                                    {% else %}
+                                    {% elif not skill.is_under_supervision %}
                                         <a href="{{ url_for('request_swap', skill_id=skill.id) }}" class="btn btn-primary">
                                             <i class="fas fa-exchange-alt me-2"></i>Request Swap
                                         </a>
@@ -134,6 +131,15 @@
                                     </a>
                                 {% endif %}
                             </div>
+                            
+                            <!-- Under Supervision Status -->
+                            {% if skill.is_under_supervision %}
+                            <div class="mt-2">
+                                <button class="btn btn-secondary w-100" disabled title="This user is under supervision and cannot receive swap requests">
+                                    <i class="fas fa-user-shield me-2"></i>Under Supervision
+                                </button>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

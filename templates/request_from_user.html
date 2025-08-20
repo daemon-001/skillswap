@@ -35,29 +35,7 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <div class="card border-0 bg-light">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="fas fa-search me-2"></i>Your Offered Skills
-                                </h5>
-                                <p class="text-muted">Select a skill you can offer in exchange</p>
-                                
-                                {% if user_skills %}
-                                <select class="form-select" id="offered_skill" name="offered_skill_id" required>
-                                    <option value="">Choose your skill...</option>
-                                    {% for skill_option in user_skills %}
-                                    <option value="{{ skill_option.id }}">{{ skill_option.skill_name }}</option>
-                                    {% endfor %}
-                                </select>
-                                {% else %}
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    You need to add skills to offer before requesting swaps.
-                                    <a href="{{ url_for('dashboard') }}" class="alert-link">Add skills here</a>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+                        <!-- Removed skill selection box - area left blank -->
                     </div>
                 </div>
                 

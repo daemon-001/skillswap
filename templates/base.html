@@ -277,6 +277,31 @@
         });
     </script>
     
+    <!-- Auto-filter enhancement -->
+    <script>
+        // Add loading state to forms when auto-submitted
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    // Add loading state to submit buttons
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+                        submitBtn.disabled = true;
+                        
+                        // Reset button after a delay (in case of errors)
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }, 5000);
+                    }
+                });
+            });
+        });
+    </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html> 
