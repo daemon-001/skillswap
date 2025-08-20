@@ -1727,6 +1727,81 @@ def download_swap_stats():
         flash(f'Error generating swap stats report: {str(e)}', 'error')
         return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/download/users')
+@admin_required
+def download_users():
+    """Download all users data as CSV"""
+    try:
+        conn = get_db()
+        users = conn.execute('''
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.location,
+                u.bio,
+                u.availability,
+                u.is_public,
+                u.is_admin,
+                u.is_banned,
+                u.is_under_supervision,
+                u.created_at,
+                COUNT(DISTINCT s_offered.id) as offered_skills_count,
+                COUNT(DISTINCT s_wanted.id) as wanted_skills_count,
+                COUNT(DISTINCT sr.id) as swap_requests_count,
+                COUNT(DISTINCT CASE WHEN sr.status = 'accepted' THEN sr.id END) as completed_swaps_count
+            FROM users u
+            LEFT JOIN skills s_offered ON u.id = s_offered.user_id AND s_offered.skill_type = 'offered' AND s_offered.is_rejected = 0
+            LEFT JOIN skills s_wanted ON u.id = s_wanted.user_id AND s_wanted.skill_type = 'wanted' AND s_wanted.is_rejected = 0
+            LEFT JOIN swap_requests sr ON u.id = sr.requester_id OR u.id = sr.provider_id
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+        ''').fetchall()
+        conn.close()
+        
+        # Create CSV output
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'User ID', 'Name', 'Email', 'Location', 'Bio', 'Availability', 
+            'Is Public', 'Is Admin', 'Is Banned', 'Under Supervision', 'Created At',
+            'Offered Skills Count', 'Wanted Skills Count', 'Total Swap Requests', 'Completed Swaps'
+        ])
+        
+        # Write data rows
+        for user in users:
+            writer.writerow([
+                user['id'],
+                user['name'],
+                user['email'],
+                user['location'] or '',
+                user['bio'] or '',
+                user['availability'] or '',
+                'Yes' if user['is_public'] else 'No',
+                'Yes' if user['is_admin'] else 'No',
+                'Yes' if user['is_banned'] else 'No',
+                'Yes' if user['is_under_supervision'] else 'No',
+                user['created_at'],
+                user['offered_skills_count'],
+                user['wanted_skills_count'],
+                user['swap_requests_count'],
+                user['completed_swaps_count']
+            ])
+        
+        output.seek(0)
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'users_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+        
+    except Exception as e:
+        flash(f'Error exporting users data: {str(e)}', 'error')
+        return redirect(url_for('admin_users'))
+
 @app.route('/remove_profile_photo', methods=['POST'])
 @login_required
 def remove_profile_photo():

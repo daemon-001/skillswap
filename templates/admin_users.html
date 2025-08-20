@@ -141,13 +141,13 @@
                     </div>
                     <div class="col-md-3">
                         <a href="{{ url_for('admin_messages') }}" class="btn btn-success w-100">
-                            <i class="fas fa-bullhorn me-2"></i>Send Messages
+                            <i class="fas fa-bullhorn me-2"></i>Send Announcement
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-warning w-100" onclick="exportUserData()">
+                        <a href="{{ url_for('download_users') }}" class="btn btn-warning w-100">
                             <i class="fas fa-download me-2"></i>Export Data
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -158,11 +158,6 @@
 
 {% block scripts %}
 <script>
-function exportUserData() {
-    // TODO: Implement user data export functionality
-    alert('User data export functionality will be implemented here');
-}
-
 // Admin action confirmation
 document.addEventListener('DOMContentLoaded', function() {
     const adminActionButtons = document.querySelectorAll('.admin-action-btn');
