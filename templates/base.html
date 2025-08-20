@@ -34,18 +34,18 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">
                             <i class="fas fa-home me-1"></i>Home
                         </a>
                     </li>
                     {% if session.user_id and not session.is_admin %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint in ['dashboard', 'notifications', 'rate_swap'] else '' }}" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('search') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint in ['search', 'request_swap', 'view_profile'] else '' }}" href="{{ url_for('search') }}">
                             <i class="fas fa-search me-1"></i>Search Skills
                         </a>
                     </li>
@@ -59,7 +59,7 @@
                     {% endif %}
                     {% if session.user_id and session.is_admin %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint in ['admin_dashboard', 'admin_users', 'admin_skills', 'admin_messages'] else '' }}" href="{{ url_for('admin_dashboard') }}">
                             <i class="fas fa-cogs me-1"></i>Admin Dashboard
                         </a>
                     </li>
@@ -75,11 +75,11 @@
                 <ul class="navbar-nav">
                     {% if session.user_id and not session.is_admin %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['profile', 'update_profile'] else '' }}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>Account
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                            <li><a class="dropdown-item {{ 'active' if request.endpoint == 'profile' else '' }}" href="{{ url_for('profile') }}">
                                 <i class="fas fa-user-edit me-2"></i>Profile
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -91,20 +91,20 @@
                     {% endif %}
                     {% if session.user_id and session.is_admin %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['admin_dashboard', 'admin_users', 'admin_skills', 'admin_messages'] else '' }}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-shield me-1"></i>Admin
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                            <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_dashboard' else '' }}" href="{{ url_for('admin_dashboard') }}">
                                 <i class="fas fa-cogs me-2"></i>Admin Dashboard
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">
+                            <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_users' else '' }}" href="{{ url_for('admin_users') }}">
                                 <i class="fas fa-users me-2"></i>Manage Users
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin_skills') }}">
+                            <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_skills' else '' }}" href="{{ url_for('admin_skills') }}">
                                 <i class="fas fa-tools me-2"></i>Manage Skills
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin_messages') }}">
+                            <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_messages' else '' }}" href="{{ url_for('admin_messages') }}">
                                 <i class="fas fa-bullhorn me-2"></i>Manage Messages
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -116,12 +116,12 @@
                     {% endif %}
                     {% if not session.user_id %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'login' else '' }}" href="{{ url_for('login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-primary" href="{{ url_for('register') }}">
+                        <a class="btn btn-primary {{ 'active' if request.endpoint == 'register' else '' }}" href="{{ url_for('register') }}">
                             <i class="fas fa-user-plus me-1"></i>Get Started
                         </a>
                     </li>

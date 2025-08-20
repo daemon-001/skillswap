@@ -1483,6 +1483,49 @@ a:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
+/* Navigation Active States */
+.navbar-nav .nav-link.active {
+    color: var(--primary) !important;
+    font-weight: 500;
+    background-color: rgba(37, 99, 235, 0.1);
+    border-radius: 0.5rem;
+}
+
+.dropdown-item.active {
+    background-color: var(--primary);
+    color: var(--white) !important;
+}
+
+.dropdown-item.active i {
+    color: var(--white) !important;
+}
+
+/* Button active state for register */
+.btn-primary.active {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Hover effects for nav items */
+.navbar-nav .nav-link:hover {
+    color: var(--primary-light) !important;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--primary-light);
+    color: var(--white) !important;
+}
+
+/* Dropdown toggle active state */
+.nav-link.dropdown-toggle.active {
+    color: var(--primary) !important;
+    font-weight: 500;
+    background-color: rgba(37, 99, 235, 0.1);
+    border-radius: 0.5rem;
+}
+
 /* Availability Schedule Styling */
 .availability-schedule {
     border: 1px solid var(--gray-200);
