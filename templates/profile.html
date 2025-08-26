@@ -62,7 +62,10 @@
                         <i class="fas fa-clock me-2"></i>
                         <strong>Availability:</strong> 
                         {% if user.availability %}
-                            <span class="badge bg-success">Available</span> {{ user.availability }}
+                            <span class="badge bg-success">Available</span>
+                            <div class="mt-1 small text-muted">
+                                {{ user.availability }}
+                            </div>
                         {% else %}
                             <span class="badge bg-secondary">Not Available</span>
                         {% endif %}
@@ -132,12 +135,88 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="availability_details" class="form-label">Availability Details</label>
-                        <textarea class="form-control" id="availability_details" name="availability_details" rows="2" 
-                                  placeholder="e.g., Weekdays 6-8 PM, Weekends anytime...">{{ user.availability or '' }}</textarea>
+                        <label class="form-label">Availability Details</label>
+                        <div class="availability-schedule">
+                            <!-- Day Selection -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold mb-2">Select Available Days:</label>
+                                <div class="row g-2">
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="monday" name="days[]" value="monday" 
+                                                   {{ 'checked' if 'monday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="monday">Monday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="tuesday" name="days[]" value="tuesday" 
+                                                   {{ 'checked' if 'tuesday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="tuesday">Tuesday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="wednesday" name="days[]" value="wednesday" 
+                                                   {{ 'checked' if 'wednesday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="wednesday">Wednesday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="thursday" name="days[]" value="thursday" 
+                                                   {{ 'checked' if 'thursday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="thursday">Thursday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="friday" name="days[]" value="friday" 
+                                                   {{ 'checked' if 'friday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="friday">Friday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="saturday" name="days[]" value="saturday" 
+                                                   {{ 'checked' if 'saturday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="saturday">Saturday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="sunday" name="days[]" value="sunday" 
+                                                   {{ 'checked' if 'sunday' in (user.availability_days or '').split(',') else '' }}>
+                                            <label class="form-check-label" for="sunday">Sunday</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Time Range Input -->
+                            <div class="time-range-section" id="time-range-section" style="display: none;">
+                                <label class="form-label fw-bold mb-2">Time Range (applies to all selected days):</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Start Time</label>
+                                        <input type="time" class="form-control" name="start_time" 
+                                               value="{{ user.availability_start_time if user.availability_start_time else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">End Time</label>
+                                        <input type="time" class="form-control" name="end_time" 
+                                               value="{{ user.availability_end_time if user.availability_end_time else '' }}">
+                                    </div>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This time range will apply to all the days you have selected above.
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-text">
                             <i class="fas fa-info-circle me-1"></i>
-                            Provide specific details about when you're available (optional).
+                            Select the days and set a time range when you're available for skill exchanges.
                         </div>
                     </div>
                     
@@ -431,6 +510,38 @@
 
 {% block scripts %}
 <script>
+// Availability schedule functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dayCheckboxes = document.querySelectorAll('input[name="days[]"]');
+    const timeRangeSection = document.getElementById('time-range-section');
+    
+    function updateTimeRangeVisibility() {
+        const checkedDays = document.querySelectorAll('input[name="days[]"]:checked');
+        if (checkedDays.length > 0) {
+            timeRangeSection.style.display = 'block';
+        } else {
+            timeRangeSection.style.display = 'none';
+            // Clear time inputs when no days are selected
+            const startTimeInput = document.querySelector('input[name="start_time"]');
+            const endTimeInput = document.querySelector('input[name="end_time"]');
+            if (startTimeInput) startTimeInput.value = '';
+            if (endTimeInput) endTimeInput.value = '';
+        }
+    }
+    
+    dayCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateTimeRangeVisibility);
+        
+        // Initialize visibility on page load
+        if (checkbox.checked) {
+            updateTimeRangeVisibility();
+        }
+    });
+    
+    // Initial check
+    updateTimeRangeVisibility();
+});
+
 function editSkill(skillId) {
     // TODO: Implement edit skill functionality
     alert('Edit skill functionality will be implemented here');

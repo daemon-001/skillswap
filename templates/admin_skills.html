@@ -66,19 +66,28 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if skill.is_approved %}
-                                            <a href="{{ url_for('reject_skill', skill_id=skill.id) }}" 
-                                               class="btn btn-sm btn-outline-warning admin-action-btn"
-                                               data-action="reject" data-target="skill">
+                                        <div class="btn-group" role="group">
+                                            {% if not skill.is_approved %}
+                                                <a href="{{ url_for('approve_skill', skill_id=skill.id) }}" 
+                                                   class="btn btn-sm btn-outline-success admin-action-btn"
+                                                   data-action="approve" data-target="skill">
+                                                    <i class="fas fa-check me-1"></i>Accept
+                                                </a>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-success" disabled>
+                                                    <i class="fas fa-check me-1"></i>Accepted
+                                                </button>
+                                            {% endif %}
+                                            
+                                            <button class="btn btn-sm btn-outline-danger reject-skill-btn"
+                                                   data-skill-id="{{ skill.id }}"
+                                                   data-skill-name="{{ skill.skill_name }}"
+                                                   data-user-name="{{ skill.user_name }}"
+                                                   data-bs-toggle="modal" 
+                                                   data-bs-target="#rejectSkillModal">
                                                 <i class="fas fa-times me-1"></i>Reject
-                                            </a>
-                                        {% else %}
-                                            <a href="{{ url_for('approve_skill', skill_id=skill.id) }}" 
-                                               class="btn btn-sm btn-outline-success admin-action-btn"
-                                               data-action="approve" data-target="skill">
-                                                <i class="fas fa-check me-1"></i>Approve
-                                            </a>
-                                        {% endif %}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -119,7 +128,7 @@
                     </div>
                     <div class="col-md-3">
                         <a href="{{ url_for('admin_messages') }}" class="btn btn-success w-100">
-                            <i class="fas fa-bullhorn me-2"></i>Send Messages
+                            <i class="fas fa-bullhorn me-2"></i>Send Announcement
                         </a>
                     </div>
                     <div class="col-md-3">
@@ -129,6 +138,73 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Skill Modal -->
+<div class="modal fade" id="rejectSkillModal" tabindex="-1" aria-labelledby="rejectSkillModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectSkillModalLabel">
+                    <i class="fas fa-times-circle me-2 text-danger"></i>Reject Skill
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('reject_skill_with_reason') }}" id="rejectSkillForm">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        You are about to reject the skill "<strong id="skillNameDisplay"></strong>" by <strong id="userNameDisplay"></strong>.
+                    </div>
+                    
+                    <input type="hidden" name="skill_id" id="skillIdInput">
+                    
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">
+                            <i class="fas fa-comment me-1"></i>Reason for Rejection <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="4" 
+                                  placeholder="Please provide a clear reason why this skill is being rejected..." required></textarea>
+                        <div class="form-text">
+                            This message will be sent to the user along with the rejection notification.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-lightbulb me-1"></i>Common Rejection Reasons
+                        </label>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm text-start reason-preset" 
+                                    data-reason="This skill is too vague or generic. Please be more specific about your expertise level and what you can teach.">
+                                <i class="fas fa-copy me-1"></i>Too vague/generic
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm text-start reason-preset" 
+                                    data-reason="This skill doesn't appear to be appropriate for our educational platform. Please review our community guidelines.">
+                                <i class="fas fa-copy me-1"></i>Inappropriate content
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm text-start reason-preset" 
+                                    data-reason="This skill appears to be incomplete or missing important details. Please provide more information about what you can offer.">
+                                <i class="fas fa-copy me-1"></i>Incomplete information
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm text-start reason-preset" 
+                                    data-reason="This skill is a duplicate of one you've already added. Please avoid submitting the same skill multiple times.">
+                                <i class="fas fa-copy me-1"></i>Duplicate skill
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban me-1"></i>Reject Skill
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -153,6 +229,33 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!confirm(`Are you sure you want to ${action} this ${target}?`)) {
                 e.preventDefault();
             }
+        });
+    });
+    
+    // Handle reject skill modal
+    const rejectSkillButtons = document.querySelectorAll('.reject-skill-btn');
+    rejectSkillButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const skillId = this.dataset.skillId;
+            const skillName = this.dataset.skillName;
+            const userName = this.dataset.userName;
+            
+            // Update modal content
+            document.getElementById('skillIdInput').value = skillId;
+            document.getElementById('skillNameDisplay').textContent = skillName;
+            document.getElementById('userNameDisplay').textContent = userName;
+            
+            // Clear previous reason
+            document.getElementById('rejectionReason').value = '';
+        });
+    });
+    
+    // Handle preset reason buttons
+    const reasonPresetButtons = document.querySelectorAll('.reason-preset');
+    reasonPresetButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reason = this.dataset.reason;
+            document.getElementById('rejectionReason').value = reason;
         });
     });
 });
