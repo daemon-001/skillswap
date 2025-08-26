@@ -139,7 +139,7 @@ skillswap/
 - **Mobile Support**: Responsive design for mobile devices
 - **JavaScript Required**: Chat functionality requires JavaScript enabled
 
-## Contributing
+## Contribution
 
 1. Fork the repository
 2. Create a feature branch
