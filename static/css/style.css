@@ -112,12 +112,27 @@ a:hover {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 var(--spacing-md);
+    padding: 0 var(--spacing-xl); /* Increased from --spacing-md for better breathing room */
 }
 
 .container-fluid {
     width: 100%;
-    padding: 0 var(--spacing-md);
+    padding: 0 var(--spacing-xl); /* Increased from --spacing-md */
+}
+
+/* Admin-specific container improvements */
+.admin-container {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    min-height: calc(100vh - 120px);
+}
+
+/* Admin header section improvements */
+.admin-stats {
+    padding: var(--spacing-xl) var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(37, 99, 235, 0.1);
+    margin-bottom: var(--spacing-xl);
 }
 
 /* Navigation */
@@ -201,7 +216,7 @@ a:hover {
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-xl); /* Increased from --spacing-sm --spacing-lg */
     font-size: 0.875rem;
     font-weight: 500;
     line-height: 1.5;
@@ -268,13 +283,35 @@ a:hover {
 }
 
 .btn-sm {
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg); /* Increased from --spacing-xs --spacing-md */
     font-size: 0.8rem;
 }
 
 .btn-lg {
-    padding: var(--spacing-md) var(--spacing-xl);
+    padding: var(--spacing-lg) var(--spacing-2xl); /* Increased from --spacing-md --spacing-xl */
     font-size: 1rem;
+}
+
+/* Admin button improvements */
+.admin-action-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.8rem;
+    min-width: 100px;
+    margin: 0 var(--spacing-xs);
+}
+
+/* Button group improvements */
+.btn-group .btn {
+    margin-right: var(--spacing-xs);
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.btn-group-sm .btn {
+    padding: var(--spacing-xs) var(--spacing-md);
+    margin-right: var(--spacing-xs);
 }
 
 /* Cards */
@@ -295,11 +332,20 @@ a:hover {
 .card-header {
     background-color: var(--gray-50);
     border-bottom: 1px solid var(--gray-200);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl) var(--spacing-xl); /* Increased from --spacing-lg */
 }
 
 .card-body {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl) var(--spacing-xl); /* Increased from --spacing-lg */
+}
+
+/* Admin card improvements */
+.admin-card .card-header {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+}
+
+.admin-card .card-body {
+    padding: var(--spacing-xl) var(--spacing-2xl);
 }
 
 .card-title {
@@ -317,24 +363,24 @@ a:hover {
 .card-footer {
     background-color: var(--gray-50);
     border-top: 1px solid var(--gray-200);
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-lg) var(--spacing-xl); /* Increased horizontal padding */
 }
 
 /* Forms */
 .form-group {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl); /* Increased from --spacing-lg */
 }
 
 .form-label {
     display: block;
     font-weight: 500;
     color: var(--gray-700);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md); /* Increased from --spacing-sm */
 }
 
 .form-control {
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg); /* Increased from --spacing-sm --spacing-md */
     font-size: 0.875rem;
     line-height: 1.5;
     color: var(--gray-900);
@@ -342,6 +388,38 @@ a:hover {
     border: 1px solid var(--gray-300);
     border-radius: var(--radius);
     transition: var(--transition);
+}
+
+/* Admin form improvements */
+.admin-form .form-group {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.admin-form .form-control {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: 0.9rem;
+}
+
+.admin-form .form-label {
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+}
+
+.form-select {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg); /* Increased from --spacing-sm --spacing-md */
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--gray-900);
+    background-color: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    transition: var(--transition);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center; /* Adjusted for increased padding */
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 3rem; /* Increased from 2.5rem */
 }
 
 .form-control:focus {
@@ -354,23 +432,6 @@ a:hover {
     color: var(--gray-400);
 }
 
-.form-select {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    color: var(--gray-900);
-    background-color: var(--white);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius);
-    transition: var(--transition);
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
-}
-
 .form-select:focus {
     outline: none;
     border-color: var(--primary);
@@ -379,10 +440,10 @@ a:hover {
 
 /* Alerts */
 .alert {
-    padding: var(--spacing-md);
-    border-radius: var(--radius);
+    padding: var(--spacing-lg) var(--spacing-xl); /* Increased from --spacing-md */
+    border-radius: var(--radius-md); /* Increased border radius */
     border: 1px solid transparent;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl); /* Increased from --spacing-lg */
 }
 
 .alert-info {
@@ -422,26 +483,41 @@ a:hover {
     background-color: var(--gray-50);
     color: var(--gray-700);
     font-weight: 600;
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xl); /* Increased from --spacing-md */
     text-align: left;
     border-bottom: 1px solid var(--gray-200);
 }
 
 .table td {
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xl); /* Increased from --spacing-md */
     border-bottom: 1px solid var(--gray-200);
     color: var(--gray-600);
+    vertical-align: middle; /* Better alignment for content */
+}
+
+/* Admin table improvements */
+.admin-table th {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.admin-table td {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    font-size: 0.9rem;
 }
 
 .table tbody tr:hover {
     background-color: var(--gray-50);
+    transition: background-color 0.2s ease;
 }
 
 /* Badges */
 .badge {
     display: inline-flex;
     align-items: center;
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md); /* Increased from --spacing-xs --spacing-sm */
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1;
@@ -529,7 +605,7 @@ a:hover {
 .modal-header {
     background-color: var(--gray-50);
     border-bottom: 1px solid var(--gray-200);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl) var(--spacing-2xl); /* Increased from --spacing-lg */
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
@@ -539,14 +615,41 @@ a:hover {
 }
 
 .modal-body {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl) var(--spacing-2xl); /* Increased from --spacing-lg */
 }
 
 .modal-footer {
     background-color: var(--gray-50);
     border-top: 1px solid var(--gray-200);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl) var(--spacing-2xl); /* Increased from --spacing-lg */
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+/* Admin modal improvements */
+.admin-modal .modal-body {
+    padding: var(--spacing-2xl);
+}
+
+.admin-modal .form-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.admin-modal .form-check {
+    margin-bottom: var(--spacing-md);
+    padding-left: var(--spacing-xl);
+}
+
+.admin-modal .form-check-input {
+    margin-left: calc(-1 * var(--spacing-xl));
+}
+
+/* Modal form improvements */
+.modal .row.g-3 > * {
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.modal hr {
+    margin: var(--spacing-xl) 0;
 }
 
 /* Hero Section */
@@ -651,7 +754,7 @@ a:hover {
     background: var(--white);
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-2xl) var(--spacing-xl); /* Increased from --spacing-xl */
     text-align: center;
     box-shadow: var(--shadow);
     transition: var(--transition);
@@ -674,6 +777,55 @@ a:hover {
     font-weight: 500;
 }
 
+/* Admin-specific section spacing */
+.admin-section {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.admin-section-header {
+    padding: var(--spacing-xl) 0;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* List group improvements for admin */
+.list-group-item {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: var(--spacing-xs);
+    border-radius: var(--radius) !important;
+}
+
+.list-group-flush .list-group-item {
+    border-width: 0 0 1px 0;
+    margin-bottom: 0;
+    border-radius: 0 !important;
+}
+
+/* Report card improvements */
+.report-card {
+    padding: var(--spacing-xl) var(--spacing-lg) !important;
+    margin-bottom: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Badge improvements for better spacing */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md); /* Increased from --spacing-xs --spacing-sm */
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
 /* Loading States */
 .loading {
     display: inline-block;
@@ -692,7 +844,15 @@ a:hover {
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
-        padding: 0 var(--spacing-sm);
+        padding: 0 var(--spacing-md); /* Reduced padding on mobile */
+    }
+
+    .container-fluid {
+        padding: 0 var(--spacing-md);
+    }
+
+    .admin-container {
+        padding: var(--spacing-lg) var(--spacing-md);
     }
     
     .hero-section h1 {
@@ -704,16 +864,72 @@ a:hover {
     }
     
     .card-body {
-        padding: var(--spacing-md);
+        padding: var(--spacing-lg); /* Reduced padding on mobile */
+    }
+
+    .card-header {
+        padding: var(--spacing-lg);
+    }
+
+    .admin-card .card-header,
+    .admin-card .card-body {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    .table th,
+    .table td {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .admin-stats {
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
     }
     
     .btn {
         width: 100%;
         justify-content: center;
+        margin-bottom: var(--spacing-sm);
     }
     
     .table-responsive {
         overflow-x: auto;
+    }
+
+    /* Button group responsive improvements */
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: var(--spacing-xs);
+        border-radius: var(--radius) !important;
+    }
+
+    .btn-group .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Tablet responsive improvements */
+@media (max-width: 992px) and (min-width: 769px) {
+    .admin-container {
+        padding: var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .card-body,
+    .card-header {
+        padding: var(--spacing-lg) var(--spacing-xl);
     }
 }
 
@@ -824,13 +1040,18 @@ a:hover {
 
 /* Button Group Improvements */
 .d-grid.gap-2 {
-    gap: 0.75rem !important;
+    gap: var(--spacing-md) !important; /* Increased from 0.75rem */
 }
 
 .d-grid.gap-2 .btn {
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md); /* Increased border radius */
     font-weight: 500;
-    padding: 0.75rem 1.5rem;
+    padding: var(--spacing-lg) var(--spacing-xl); /* Increased padding */
+}
+
+/* Quick actions grid improvements */
+.row.g-3 > * {
+    padding: var(--spacing-sm);
 }
 
 /* Chat Interface Styles */
@@ -1182,7 +1403,7 @@ a:hover {
     color: rgba(255, 255, 255, 0.7);
 }
 
-.message.system-message .message-content {
+.message-system-message .message-content {
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     color: #6c757d;
@@ -1394,7 +1615,7 @@ a:hover {
 /* Empty State */
 .empty-state {
     text-align: center;
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-2xl) var(--spacing-xl);
     color: var(--gray-500);
 }
 
@@ -1602,4 +1823,51 @@ a:hover {
     background-color: #d1ecf1;
     border-color: #bee5eb;
     color: #0c5460;
+} 
+
+/* Additional admin improvements */
+.admin-page-header {
+    padding: var(--spacing-2xl) 0 var(--spacing-xl) 0;
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.admin-quick-actions {
+    padding: var(--spacing-xl) 0;
+}
+
+/* Enhanced form check spacing for admin modals */
+.form-check {
+    margin-bottom: var(--spacing-md);
+    padding-left: var(--spacing-lg);
+}
+
+.form-check-input {
+    margin-left: calc(-1 * var(--spacing-lg));
+    margin-top: 0.25rem;
+}
+
+.form-check-label {
+    padding-left: var(--spacing-sm);
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Empty state improvements */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    color: var(--gray-500);
+}
+
+/* Final admin table action improvements */
+.admin-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.admin-actions .btn {
+    margin: 0;
 } 
