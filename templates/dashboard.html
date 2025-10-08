@@ -3,71 +3,69 @@
 {% block title %}Dashboard - SkillSwap{% endblock %}
 
 {% block content %}
-<!-- Notifications Alert -->
-{% if unread_notifications and unread_notifications > 0 %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <i class="fas fa-bell me-2"></i>
-            You have <strong>{{ unread_notifications }}</strong> unread notification{{ 's' if unread_notifications != 1 else '' }}.
-            <a href="{{ url_for('notifications') }}" class="alert-link">View notifications</a>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- Supervision Alert -->
-{% if user.is_under_supervision %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-warning" role="alert">
-            <i class="fas fa-user-shield me-2"></i>
-            <strong>Account Under Supervision:</strong> Your account is currently under administrative supervision. 
-            You cannot add new skills, delete existing skills, or make swap requests. Please contact an administrator if you have questions.
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- Welcome Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="profile-header">
-            <div class="row align-items-center">
-                <div class="col-md-2 text-center">
-                    <div class="position-relative d-inline-block">
-                        {% if user.profile_photo %}
-                            <img src="{{ url_for('static', filename='uploads/' + user.profile_photo) }}" 
-                                 alt="Profile" class="profile-avatar">
-                        {% else %}
-                            <img src="{{ url_for('static', filename='images/default-avatar.png') }}" 
-                                 alt="Profile" class="profile-avatar">
-                        {% endif %}
-                        {% if user.is_under_supervision %}
-                            <div class="position-absolute top-0 end-0 bg-warning rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width: 20px; height: 20px; transform: translate(25%, -25%);"
-                                 title="Your account is under supervision">
-                                <i class="fas fa-user-shield text-dark" style="font-size: 10px;"></i>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="col-md-10">
-                    <h2 class="mb-2">Welcome back, {{ user.name or 'User' }}!</h2>
-                    <p class="mb-2">
-                        <i class="fas fa-map-marker-alt me-2"></i>
-                        {{ user.location or 'Location not specified' }}
-                    </p>
-                    <p class="mb-0">
-                        <i class="fas fa-calendar me-2"></i>
-                        Member since {{ user.created_at.strftime('%B %Y') if user and user.created_at else 'Recently' }}
-                    </p>
+<!-- Modern Dashboard Hero -->
+<section class="dashboard-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="hero-title">Welcome back, {{ user.name }}!</h1>
+                <p class="hero-subtitle">Ready to continue your skill-sharing journey? Explore new opportunities and connect with amazing people.</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="hero-avatar">
+                    {% if user.profile_photo %}
+                        <img src="{{ url_for('static', filename='uploads/' + user.profile_photo) }}" 
+                             alt="Profile" class="avatar-img">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/default-avatar.png') }}" 
+                             alt="Profile" class="avatar-img">
+                    {% endif %}
+                    {% if user.is_under_supervision %}
+                        <div class="supervision-badge">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<div class="container py-4">
+    <!-- Notifications Alert -->
+    {% if unread_notifications and unread_notifications > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert modern-alert alert-warning alert-dismissible fade show" role="alert">
+                <div class="alert-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="alert-content">
+                    <strong>{{ unread_notifications }}</strong> unread notification{{ 's' if unread_notifications != 1 else '' }}
+                    <a href="{{ url_for('notifications') }}" class="alert-link">View notifications</a>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Supervision Alert -->
+    {% if user.is_under_supervision %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert modern-alert alert-warning" role="alert">
+                <div class="alert-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="alert-content">
+                    <strong>Account Under Supervision:</strong> Your account is currently under administrative supervision. 
+                    You cannot add new skills, delete existing skills, or make swap requests. Please contact an administrator if you have questions.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 <!-- Stats Cards -->
 <div class="row mb-4">

@@ -3,151 +3,168 @@
 {% block title %}Admin - Manage Users{% endblock %}
 
 {% block content %}
-<!-- Admin Header -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="admin-stats">
-            <h2 class="mb-3">
-                <i class="fas fa-users me-2"></i>Manage Users
-            </h2>
-            <p class="mb-0">Monitor and manage user accounts.</p>
+<!-- Admin Hero Section -->
+<section class="dashboard-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <i class="fas fa-users me-3"></i>Manage Users
+                    </h1>
+                    <p class="hero-subtitle">
+                        Monitor and manage user accounts with comprehensive administrative controls.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="hero-avatar">
+                    <div class="avatar-img d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(147, 197, 253, 0.1)); width: 120px; height: 120px; border-radius: 50%; margin: 0 auto;">
+                        <i class="fas fa-user-shield" style="font-size: 3rem; color: var(--primary);"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 <!-- Users Table -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-list me-2"></i>All Users
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if users %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Location</th>
-                                    <th>Joined</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in users %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ user.name }}</strong>
-                                    </td>
-                                    <td>
-                                        <small>{{ user.email }}</small>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">
-                                            {{ user.location or 'Not specified' }}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">
-                                            {% if user.created_at %}
-                                                {{ user.created_at.strftime('%B %d, %Y') }}
-                                            {% else %}
-                                                Unknown
-                                            {% endif %}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        {% if user.is_banned %}
-                                            <span class="badge bg-danger">Banned</span>
-                                        {% else %}
-                                            <span class="badge bg-success">Active</span>
-                                        {% endif %}
-                                        {% if user.is_under_supervision %}
-                                            <span class="badge bg-warning text-dark ms-1">Under Supervision</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card modern-search-card">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; border: none;">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>All Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" style="border-radius: var(--radius-lg); overflow: hidden;">
+                                <thead style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.05));">
+                                    <tr>
+                                        <th style="border: none; padding: 1rem; font-weight: 600;">Name</th>
+                                        <th style="border: none; padding: 1rem; font-weight: 600;">Email</th>
+                                        <th style="border: none; padding: 1rem; font-weight: 600;">Location</th>
+                                        <th style="border: none; padding: 1rem; font-weight: 600;">Joined</th>
+                                        <th style="border: none; padding: 1rem; font-weight: 600;">Status</th>
+                                        <th style="border: none; padding: 1rem; font-weight: 600;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+                                        <td style="padding: 1rem; border: none;">
+                                            <strong>{{ user.name }}</strong>
+                                        </td>
+                                        <td style="padding: 1rem; border: none;">
+                                            <small class="text-muted">{{ user.email }}</small>
+                                        </td>
+                                        <td style="padding: 1rem; border: none;">
+                                            <small class="text-muted">
+                                                {{ user.location or 'Not specified' }}
+                                            </small>
+                                        </td>
+                                        <td style="padding: 1rem; border: none;">
+                                            <small class="text-muted">
+                                                {% if user.created_at %}
+                                                    {{ user.created_at.strftime('%B %d, %Y') }}
+                                                {% else %}
+                                                    Unknown
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td style="padding: 1rem; border: none;">
                                             {% if user.is_banned %}
-                                                <a href="{{ url_for('unban_user', user_id=user.id) }}" 
-                                                   class="btn btn-outline-success admin-action-btn"
-                                                   data-action="unban" data-target="user">
-                                                    <i class="fas fa-user-check me-1"></i>Unban
-                                                </a>
+                                                <span class="badge bg-danger" style="border-radius: var(--radius-md);">Banned</span>
                                             {% else %}
-                                                <a href="{{ url_for('ban_user', user_id=user.id) }}" 
-                                                   class="btn btn-outline-danger admin-action-btn"
-                                                   data-action="ban" data-target="user">
-                                                    <i class="fas fa-user-times me-1"></i>Ban
-                                                </a>
+                                                <span class="badge bg-success" style="border-radius: var(--radius-md);">Active</span>
                                             {% endif %}
-
                                             {% if user.is_under_supervision %}
-                                                <a href="{{ url_for('unsupervise_user', user_id=user.id) }}" 
-                                                   class="btn btn-outline-primary admin-action-btn"
-                                                   data-action="remove supervision" data-target="user">
-                                                    <i class="fas fa-user-shield me-1"></i>Remove Supervision
-                                                </a>
-                                            {% else %}
-                                                <a href="{{ url_for('supervise_user', user_id=user.id) }}" 
-                                                   class="btn btn-outline-warning admin-action-btn"
-                                                   data-action="place under supervision" data-target="user">
-                                                    <i class="fas fa-user-shield me-1"></i>Under Supervision
-                                                </a>
+                                                <span class="badge bg-warning text-dark ms-1" style="border-radius: var(--radius-md);">Under Supervision</span>
                                             {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-users fa-3x mb-3"></i>
-                        <p>No users found</p>
-                    </div>
-                {% endif %}
+                                        </td>
+                                        <td style="padding: 1rem; border: none;">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                {% if user.is_banned %}
+                                                    <a href="{{ url_for('unban_user', user_id=user.id) }}" 
+                                                       class="btn btn-outline-success admin-action-btn" style="border-radius: var(--radius-md); margin-right: 0.25rem;"
+                                                       data-action="unban" data-target="user">
+                                                        <i class="fas fa-user-check me-1"></i>Unban
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('ban_user', user_id=user.id) }}" 
+                                                       class="btn btn-outline-danger admin-action-btn" style="border-radius: var(--radius-md); margin-right: 0.25rem;"
+                                                       data-action="ban" data-target="user">
+                                                        <i class="fas fa-user-times me-1"></i>Ban
+                                                    </a>
+                                                {% endif %}
+
+                                                {% if user.is_under_supervision %}
+                                                    <a href="{{ url_for('unsupervise_user', user_id=user.id) }}" 
+                                                       class="btn btn-outline-primary admin-action-btn" style="border-radius: var(--radius-md);"
+                                                       data-action="remove supervision" data-target="user">
+                                                        <i class="fas fa-user-shield me-1"></i>Remove Supervision
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('supervise_user', user_id=user.id) }}" 
+                                                       class="btn btn-outline-warning admin-action-btn" style="border-radius: var(--radius-md);"
+                                                       data-action="place under supervision" data-target="user">
+                                                        <i class="fas fa-user-shield me-1"></i>Under Supervision
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-users fa-3x mb-3 opacity-50"></i>
+                            <p>No users found</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Quick Actions -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-bolt me-2"></i>Quick Actions
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary w-100">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('admin_skills') }}" class="btn btn-info w-100">
-                            <i class="fas fa-tools me-2"></i>Manage Skills
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('admin_messages') }}" class="btn btn-success w-100">
-                            <i class="fas fa-bullhorn me-2"></i>Send Announcement
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('download_users') }}" class="btn btn-warning w-100">
-                            <i class="fas fa-download me-2"></i>Export Data
-                        </a>
+<div class="container">
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card modern-search-card">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--success) 0%, #059669 100%); color: white; border: none;">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary w-100 modern-search-btn" style="height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_skills') }}" class="btn btn-info w-100" style="height: 60px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--info) 0%, #60a5fa 100%); border: none; border-radius: var(--radius-lg); font-weight: 600; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;">
+                                <i class="fas fa-tools me-2"></i>Manage Skills
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_messages') }}" class="btn btn-success w-100" style="height: 60px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--success) 0%, #059669 100%); border: none; border-radius: var(--radius-lg); font-weight: 600; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;">
+                                <i class="fas fa-bullhorn me-2"></i>Send Announcement
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('download_users') }}" class="btn btn-warning w-100" style="height: 60px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--warning) 0%, #f59e0b 100%); border: none; border-radius: var(--radius-lg); font-weight: 600; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); transition: all 0.3s ease;">
+                                <i class="fas fa-download me-2"></i>Export Data
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

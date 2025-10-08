@@ -1,19 +1,14 @@
-// SkillSwap Main JavaScript
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Initialize popovers
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
-    // Form validation
     const forms = document.querySelectorAll('.needs-validation');
     Array.from(forms).forEach(form => {
         form.addEventListener('submit', event => {
@@ -25,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, false);
     });
 
-    // Auto-hide alerts after 5 seconds (skip persistent ones)
     const alerts = document.querySelectorAll('.alert:not([data-no-autoclose])');
     alerts.forEach(alert => {
         setTimeout(() => {
@@ -34,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
 
-    // Skill type toggle
     const skillTypeToggles = document.querySelectorAll('.skill-type-toggle');
     skillTypeToggles.forEach(toggle => {
         toggle.addEventListener('change', function() {
@@ -49,7 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Rating system
     const ratingStars = document.querySelectorAll('.rating-star');
     ratingStars.forEach((star, index) => {
         star.addEventListener('click', function() {
@@ -57,12 +49,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const ratingContainer = this.closest('.rating-container');
             const hiddenInput = ratingContainer.querySelector('input[type="hidden"]');
             
-            // Update hidden input
             if (hiddenInput) {
                 hiddenInput.value = rating;
             }
             
-            // Update star display
             ratingStars.forEach((s, i) => {
                 if (i < rating) {
                     s.classList.remove('far');
@@ -75,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Search functionality
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         let searchTimeout;
@@ -87,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Modal form handling
     const modalForms = document.querySelectorAll('.modal form');
     modalForms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -99,7 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Profile image upload preview
     const profileImageInput = document.getElementById('profile-image');
     if (profileImageInput) {
         profileImageInput.addEventListener('change', function() {
@@ -117,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Skill search filters
     const filterButtons = document.querySelectorAll('.filter-btn');
     filterButtons.forEach(btn => {
         btn.addEventListener('click', function() {
@@ -126,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Swap request confirmation
     const swapRequestForms = document.querySelectorAll('.swap-request-form');
     swapRequestForms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -136,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Admin actions confirmation
     const adminActionButtons = document.querySelectorAll('.admin-action-btn');
     adminActionButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -148,21 +132,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Enhanced dropdown functionality
     const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
         const toggle = dropdown.querySelector('.dropdown-toggle');
         const menu = dropdown.querySelector('.dropdown-menu');
         
         if (toggle && menu) {
-            // Add click outside to close
             document.addEventListener('click', function(e) {
                 if (!dropdown.contains(e.target)) {
                     menu.classList.remove('show');
                 }
             });
             
-            // Add keyboard support
             toggle.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -170,7 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Add smooth animations
             menu.addEventListener('show.bs.dropdown', function() {
                 this.style.opacity = '0';
                 this.style.transform = 'translateY(-10px)';
@@ -182,11 +162,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Enhanced form checkboxes and switches
     const formChecks = document.querySelectorAll('.form-check-input');
     formChecks.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            // Add visual feedback
             if (this.checked) {
                 this.style.transform = 'scale(1.1)';
                 setTimeout(() => {
@@ -195,7 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Add focus styles
         checkbox.addEventListener('focus', function() {
             this.parentElement.style.transform = 'scale(1.02)';
         });
@@ -205,18 +182,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Enhanced form selects
     const formSelects = document.querySelectorAll('.form-select');
     formSelects.forEach(select => {
         select.addEventListener('change', function() {
-            // Add visual feedback
             this.style.transform = 'scale(1.02)';
             setTimeout(() => {
                 this.style.transform = 'scale(1)';
             }, 200);
         });
         
-        // Add focus styles
         select.addEventListener('focus', function() {
             this.parentElement.style.transform = 'scale(1.02)';
         });
@@ -227,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Search function
 function performSearch(query) {
     if (query.length < 2) return;
     
@@ -241,7 +214,6 @@ function performSearch(query) {
         });
 }
 
-// Update search results
 function updateSearchResults(results) {
     const resultsContainer = document.getElementById('search-results');
     if (!resultsContainer) return;
@@ -259,7 +231,6 @@ function updateSearchResults(results) {
     });
 }
 
-// Create search result element
 function createSearchResultElement(result) {
     const div = document.createElement('div');
     div.className = 'search-result fade-in-up';
@@ -287,7 +258,6 @@ function createSearchResultElement(result) {
     return div;
 }
 
-// Filter skills
 function filterSkills(filter) {
     const skillCards = document.querySelectorAll('.skill-card');
     skillCards.forEach(card => {
@@ -299,14 +269,12 @@ function filterSkills(filter) {
         }
     });
     
-    // Update active filter button
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
 }
 
-// Show loading state
 function showLoading(element) {
     if (element) {
         element.disabled = true;
@@ -314,7 +282,6 @@ function showLoading(element) {
     }
 }
 
-// Hide loading state
 function hideLoading(element, originalText) {
     if (element) {
         element.disabled = false;
@@ -322,7 +289,6 @@ function hideLoading(element, originalText) {
     }
 }
 
-// Show notification
 function showNotification(message, type = 'info') {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -336,7 +302,6 @@ function showNotification(message, type = 'info') {
     if (container) {
         container.insertBefore(alertDiv, container.firstChild);
         
-        // Auto-hide after 5 seconds
         setTimeout(() => {
             const bsAlert = new bootstrap.Alert(alertDiv);
             bsAlert.close();
@@ -344,7 +309,6 @@ function showNotification(message, type = 'info') {
     }
 }
 
-// Format date
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -356,7 +320,6 @@ function formatDate(dateString) {
     });
 }
 
-// Format rating stars
 function formatRating(rating) {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -369,13 +332,11 @@ function formatRating(rating) {
     return stars.join('');
 }
 
-// Utility function to get CSRF token
 function getCSRFToken() {
     const tokenElement = document.querySelector('meta[name="csrf-token"]');
     return tokenElement ? tokenElement.getAttribute('content') : '';
 }
 
-// Export functions for use in other scripts
 window.SkillSwap = {
     showNotification,
     formatDate,
@@ -383,9 +344,8 @@ window.SkillSwap = {
     showLoading,
     hideLoading,
     getCSRFToken
-}; 
+};
 
-// SkillSwap Chat Application
 class SkillSwapChat {
     constructor() {
         this.isOpen = false;
@@ -410,16 +370,16 @@ class SkillSwapChat {
     }
     
     bindEvents() {
-        // Chat toggle
-        const chatToggle = document.getElementById('chatToggle');
-        if (chatToggle) {
-            chatToggle.addEventListener('click', (e) => {
+        const floatingChatBtn = document.getElementById('floatingChatBtn');
+        console.log('Chat button found:', floatingChatBtn);
+        if (floatingChatBtn) {
+            floatingChatBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('Chat button clicked!');
                 this.toggleChat();
             });
         }
         
-        // Chat controls
         const chatClose = document.getElementById('chatClose');
         if (chatClose) {
             chatClose.addEventListener('click', () => this.closeChat());
@@ -430,7 +390,6 @@ class SkillSwapChat {
             chatMinimize.addEventListener('click', () => this.toggleMinimize());
         }
         
-        // Tab switching
         const chatTabs = document.querySelectorAll('.chat-tab');
         chatTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -438,7 +397,6 @@ class SkillSwapChat {
             });
         });
         
-        // Message sending
         const sendMessage = document.getElementById('sendMessage');
         if (sendMessage) {
             sendMessage.addEventListener('click', () => this.sendMessage());
@@ -451,23 +409,18 @@ class SkillSwapChat {
                     this.sendMessage();
                 }
             });
-            
-
         }
         
-        // Admin message sending
         const sendAdminMessage = document.getElementById('sendAdminMessage');
         if (sendAdminMessage) {
             sendAdminMessage.addEventListener('click', () => this.sendAdminMessage());
         }
         
-        // Back button
         const backBtn = document.getElementById('backToConversations');
         if (backBtn) {
             backBtn.addEventListener('click', () => this.showConversationsList());
         }
         
-        // Drag functionality
         this.initDragAndDrop();
     }
     
@@ -498,7 +451,6 @@ class SkillSwapChat {
         this.position.x = e.clientX - this.dragOffset.x;
         this.position.y = e.clientY - this.dragOffset.y;
         
-        // Keep chat within viewport bounds
         const chatInterface = document.querySelector('.chat-interface');
         const rect = chatInterface.getBoundingClientRect();
         
@@ -519,23 +471,16 @@ class SkillSwapChat {
         document.removeEventListener('mousemove', this.handleMouseMove.bind(this));
         document.removeEventListener('mouseup', this.handleMouseUp.bind(this));
         
-            document.body.style.cursor = '';
-            const chatInterface = document.querySelector('.chat-interface');
-            chatInterface.classList.remove('dragging');
+        document.body.style.cursor = '';
+        const chatInterface = document.querySelector('.chat-interface');
+        chatInterface.classList.remove('dragging');
     }
     
     async loadInitialData() {
         try {
-            // Load conversations
             await this.loadConversations();
-            
-            // Load users
             await this.loadUsers();
-            
-            // Load notifications
             await this.loadNotifications();
-            
-            // Update unread count
             await this.updateUnreadCount();
         } catch (error) {
             console.error('Error loading initial data:', error);
@@ -557,14 +502,12 @@ class SkillSwapChat {
     
     async loadUsers() {
         try {
-            // Load users from the dedicated API endpoint
             const response = await fetch('/chat/users');
             if (response.ok) {
                 const data = await response.json();
                 this.users = data.users || [];
                 this.renderUsers();
                 
-                // Also populate admin user select if admin
                 if (document.getElementById('adminUserSelect')) {
                     this.populateAdminUserSelect();
                 }
@@ -601,7 +544,7 @@ class SkillSwapChat {
     }
     
     updateUnreadBadge(count) {
-        const badge = document.getElementById('chatUnreadBadge');
+        const badge = document.getElementById('floatingChatBadge');
         if (badge) {
             if (count > 0) {
                 badge.textContent = count;
@@ -643,7 +586,6 @@ class SkillSwapChat {
             </div>
         `).join('');
         
-        // Add click events
         container.querySelectorAll('.conversation-item').forEach(item => {
             item.addEventListener('click', () => {
                 this.openConversation(item.dataset.conversationId);
@@ -681,7 +623,6 @@ class SkillSwapChat {
             </div>
         `).join('');
         
-        // Add click events
         container.querySelectorAll('.user-item').forEach(item => {
             item.addEventListener('click', () => {
                 this.startConversationWithUser(item.dataset.userId);
@@ -736,12 +677,8 @@ class SkillSwapChat {
             conversationsList.style.display = 'none';
             conversationView.style.display = 'flex';
             
-            // Update profile header
             this.updateProfileHeader(conversation);
-            
             this.renderMessages(messages);
-            
-            // Scroll to bottom to show latest messages
             this.scrollToBottom();
         }
     }
@@ -756,7 +693,6 @@ class SkillSwapChat {
             conversationView.style.display = 'none';
         }
         
-        // Hide profile info when going back to conversations list
         if (profileInfo) {
             profileInfo.style.display = 'none';
         }
@@ -772,7 +708,6 @@ class SkillSwapChat {
         const bio = document.getElementById('conversationProfileBio');
         
         if (profileInfo && conversation) {
-            // Update avatar
             if (avatar) {
                 avatar.src = conversation.other_user_photo || '/static/images/default-avatar.png';
                 avatar.alt = conversation.other_user_name;
@@ -785,22 +720,18 @@ class SkillSwapChat {
                 avatar.style.display = 'none';
             }
             
-            // Update name
             if (name) {
                 name.textContent = conversation.other_user_name;
             }
             
-            // Update location
             if (location) {
                 location.textContent = conversation.other_user_location || 'Location not specified';
             }
             
-            // Update bio
             if (bio) {
                 bio.textContent = conversation.other_user_bio || 'No bio available';
             }
             
-            // Show the profile info
             profileInfo.style.display = 'flex';
         }
     }
@@ -845,7 +776,6 @@ class SkillSwapChat {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    // Add message to UI
                     this.addMessageToUI(data.message);
                     input.value = '';
                 }
@@ -886,7 +816,6 @@ class SkillSwapChat {
                 const data = await response.json();
                 this.currentConversation = data.conversation_id;
                 this.showConversationView([]);
-                // Load messages for the new conversation
                 this.loadMessagesForConversation(data.conversation_id);
             }
         } catch (error) {
@@ -894,21 +823,15 @@ class SkillSwapChat {
         }
     }
 
-    // New method to open chat with a specific user from external sources
     async openChatWithUser(userId, userName = '') {
         try {
-            // Open the chat if it's not already open
             if (!this.isOpen) {
                 this.openChat();
             }
             
-            // Switch to users tab
             this.switchTab('users');
-            
-            // Start conversation with the user
             await this.startConversationWithUser(userId);
             
-            // Show success message
             if (userName) {
                 this.showSystemMessage(`Chat opened with ${userName}`);
             }
@@ -918,7 +841,6 @@ class SkillSwapChat {
         }
     }
 
-    // Helper method to show system messages
     showSystemMessage(message) {
         const messagesContainer = document.querySelector('.messages-container');
         if (messagesContainer) {
@@ -934,18 +856,15 @@ class SkillSwapChat {
         }
     }
 
-    // Method to load messages for a specific conversation
     async loadMessagesForConversation(conversationId) {
         try {
             const response = await fetch(`/chat/conversation/${conversationId}`);
             if (response.ok) {
                 const data = await response.json();
                 this.renderMessages(data.messages);
-                // Update profile header if conversation metadata is available
                 if (data.conversation) {
                     this.updateProfileHeader(data.conversation);
                 }
-                // Scroll to bottom to show latest messages
                 this.scrollToBottom();
             }
         } catch (error) {
@@ -994,10 +913,8 @@ class SkillSwapChat {
         const userSelect = document.getElementById('adminUserSelect');
         if (!userSelect) return;
         
-        // Clear existing options
         userSelect.innerHTML = '<option value="">Select a user...</option>';
         
-        // Add user options
         this.users.forEach(user => {
             const option = document.createElement('option');
             option.value = user.id;
@@ -1007,7 +924,6 @@ class SkillSwapChat {
     }
     
     switchTab(tabName) {
-        // Update active tab
         document.querySelectorAll('.chat-tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.tab === tabName);
         });
@@ -1018,19 +934,25 @@ class SkillSwapChat {
         
         this.currentTab = tabName;
         
-        // Load data for the tab if needed
         if (tabName === 'notifications') {
             this.loadNotifications();
         }
     }
     
     toggleChat() {
+        console.log('toggleChat called, isOpen:', this.isOpen);
         const chatInterface = document.getElementById('chatInterface');
-        if (!chatInterface) return;
+        console.log('Chat interface element:', chatInterface);
+        if (!chatInterface) {
+            console.error('Chat interface not found!');
+            return;
+        }
         
         if (this.isOpen) {
+            console.log('Closing chat');
             this.closeChat();
         } else {
+            console.log('Opening chat');
             this.openChat();
         }
     }
@@ -1040,10 +962,11 @@ class SkillSwapChat {
         if (!chatInterface) return;
         
         chatInterface.style.display = 'flex';
-        chatInterface.classList.add('show');
+        setTimeout(() => {
+            chatInterface.classList.add('show');
+        }, 10);
         this.isOpen = true;
         
-        // Load fresh data
         this.loadInitialData();
     }
     
@@ -1051,11 +974,10 @@ class SkillSwapChat {
         const chatInterface = document.getElementById('chatInterface');
         if (!chatInterface) return;
         
-        chatInterface.classList.add('hide');
+        chatInterface.classList.remove('show');
         setTimeout(() => {
             chatInterface.style.display = 'none';
-            chatInterface.classList.remove('hide');
-        }, 300);
+        }, 400);
         
         this.isOpen = false;
     }
@@ -1074,7 +996,6 @@ class SkillSwapChat {
     }
     
     startPolling() {
-        // Poll for new messages every 5 seconds
         setInterval(() => {
             if (this.isOpen) {
                 this.updateUnreadCount();
@@ -1093,7 +1014,6 @@ class SkillSwapChat {
             if (response.ok) {
                 const data = await response.json();
                 this.renderMessages(data.messages);
-                // Scroll to bottom to show latest messages
                 this.scrollToBottom();
             }
         } catch (error) {
@@ -1118,51 +1038,49 @@ class SkillSwapChat {
     }
 }
 
-// Initialize chat when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize if user is logged in
-    if (document.querySelector('#chatToggle')) {
+    const floatingChatBtn = document.querySelector('#floatingChatBtn');
+    console.log('Floating chat button found:', floatingChatBtn);
+    
+    if (floatingChatBtn) {
         try {
+            console.log('Initializing SkillSwap Chat...');
             window.skillSwapChat = new SkillSwapChat();
+            console.log('SkillSwap Chat initialized successfully');
         } catch (error) {
             console.error('Error initializing chat:', error);
+        }
+    } else {
+        console.log('No floating chat button found - user not logged in');
+    }
+});
+
+window.openChatWithUser = function(userId, userName) {
+    if (window.skillSwapChat) {
+        window.skillSwapChat.openChatWithUser(userId, userName);
+    } else {
+        window.location.href = '/chat';
+    }
+};
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.btn-success') && e.target.closest('.btn-success').onclick && 
+        e.target.closest('.btn-success').onclick.toString().includes('openChatWithUser')) {
+        if (!document.querySelector('#floatingChatBtn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = '/login';
+            return false;
         }
     }
 });
 
-    // Global function to open chat with a specific user (accessible from HTML)
-    window.openChatWithUser = function(userId, userName) {
-        if (window.skillSwapChat) {
-            window.skillSwapChat.openChatWithUser(userId, userName);
-        } else {
-            // Fallback: redirect to chat page
-            window.location.href = '/chat';
-        }
-    };
-
-    // Handle send message buttons for non-logged-in users
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-success') && e.target.closest('.btn-success').onclick && 
-            e.target.closest('.btn-success').onclick.toString().includes('openChatWithUser')) {
-            // Check if user is logged in
-            if (!document.querySelector('#chatToggle')) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Redirect to login page
-                window.location.href = '/login';
-                return false;
-            }
-        }
-    });
-
-// Global functions for error handling
 window.handleImageError = function(img) {
     img.src = '/static/images/default-avatar.png';
 };
 
-// Add error handling for chat interface
 window.addEventListener('error', function(e) {
     if (e.message && e.message.includes('chat')) {
         console.error('Chat error:', e);
     }
-}); 
+});

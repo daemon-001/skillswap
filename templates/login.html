@@ -3,26 +3,40 @@
 {% block title %}Login - SkillSwap{% endblock %}
 
 {% block content %}
+<!-- Modern Hero Section for Login -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="mb-4">Welcome Back to SkillSwap</h1>
+                <p class="mb-0">Sign in to continue your learning journey and connect with amazing people around the world.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="py-5">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
-                <!-- Login Card -->
-                <div class="card shadow-lg">
-                    <div class="card-header text-center py-4">
-                        <h3 class="mb-2">
-                            <i class="fas fa-sign-in-alt me-2"></i>Welcome Back
-                        </h3>
-                        <p class="text-muted mb-0">Sign in to your SkillSwap account</p>
-                        {% if request.args.get('from_request') %}
-                        <div class="alert alert-info mt-3 mb-0" role="alert">
-                            <i class="fas fa-info-circle me-2"></i>
-                            You need to be logged in to request skill swaps. Please sign in to continue.
+                <!-- Modern Login Card -->
+                <div class="card modern-auth-card">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <div class="auth-icon mb-3">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </div>
+                            <h3 class="mb-2">Sign In</h3>
+                            <p class="text-muted mb-0">Access your SkillSwap account</p>
+                            {% if request.args.get('from_request') %}
+                            <div class="alert alert-info mt-3 mb-0" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You need to be logged in to request skill swaps. Please sign in to continue.
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                    </div>
-                    <div class="card-body p-4">
-                        <form method="POST" class="needs-validation" novalidate>
+                        
+                        <form method="POST" class="needs-validation modern-form" novalidate>
                             <div class="mb-3">
                                 <label for="email" class="form-label">
                                     <i class="fas fa-envelope me-2"></i>Email Address
@@ -55,19 +69,21 @@
                                 </label>
                             </div>
                             
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                            <div class="d-grid mb-4">
+                                <button type="submit" class="btn btn-primary btn-lg modern-btn">
                                     <i class="fas fa-sign-in-alt me-2"></i>Sign In
                                 </button>
                             </div>
                         </form>
                         
-                        <hr class="my-4">
+                        <div class="auth-divider">
+                            <span>or</span>
+                        </div>
                         
                         <div class="text-center">
                             <p class="mb-0">
                                 Don't have an account? 
-                                <a href="{{ url_for('register') }}" class="text-decoration-none">
+                                <a href="{{ url_for('register') }}" class="auth-link">
                                     <i class="fas fa-user-plus me-1"></i>Create one here
                                 </a>
                             </p>
@@ -76,19 +92,22 @@
                 </div>
                 
                 <!-- Demo Account Info -->
-                <div class="card shadow-sm mt-3">
-                    <div class="card-body">
-                        <h6 class="card-title text-muted">
-                            <i class="fas fa-info-circle me-2"></i>Demo Account
-                        </h6>
-                        <p class="card-text small text-muted mb-2">
-                            For testing purposes, you can use the admin account:
+                <div class="card demo-card mt-4">
+                    <div class="card-body text-center">
+                        <div class="demo-icon mb-2">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h6 class="card-title mb-2">Demo Account</h6>
+                        <p class="card-text small text-muted mb-3">
+                            For testing purposes, you can use:
                         </p>
-                        <div class="bg-light p-3 rounded">
-                            <small>
-                                <strong>Email:</strong> admin@skillswap.com<br>
+                        <div class="demo-credentials">
+                            <div class="credential-item">
+                                <strong>Email:</strong> admin@skillswap.com
+                            </div>
+                            <div class="credential-item">
                                 <strong>Password:</strong> admin123
-                            </small>
+                            </div>
                         </div>
                     </div>
                 </div>
