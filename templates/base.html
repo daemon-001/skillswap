@@ -141,11 +141,90 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-light text-center py-4 mt-5">
+    <footer class="footer">
         <div class="container">
-            <p class="mb-0">
-                &copy; 2024 SkillSwap. Connecting people through knowledge exchange.
-            </p>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-brand">
+                        <span class="footer-brand-text">SkillSwap</span>
+                    </div>
+                    <p class="footer-description">
+                        Connect with amazing people, share your expertise, and learn new skills through our community-driven platform.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link" title="Follow us on Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Follow us on LinkedIn">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Follow us on GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="footer-title">Platform</h6>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('search') if session.user_id else url_for('login') }}">Search Skills</a></li>
+                        <li><a href="{{ url_for('dashboard') if session.user_id else url_for('login') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('profile') if session.user_id else url_for('login') }}">Profile</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="footer-title">Support</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Community Guidelines</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="footer-title">Company</h6>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="footer-title">Get Started</h6>
+                    <ul class="footer-links">
+                        {% if not session.user_id %}
+                        <li><a href="{{ url_for('register') }}">Create Account</a></li>
+                        <li><a href="{{ url_for('login') }}">Sign In</a></li>
+                        {% else %}
+                        <li><a href="{{ url_for('profile') }}">Update Profile</a></li>
+                        <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="footer-divider">
+            
+            <div class="footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="footer-copyright">
+                            &copy; 2025 SkillSwap. All rights reserved. Connecting people through knowledge exchange.
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="footer-version">
+                            <i class="fas fa-code me-1"></i>
+                            Built with <i class="fas fa-heart text-danger"></i> for the community
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
 
