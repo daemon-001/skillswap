@@ -1,156 +1,229 @@
-# SkillSwap - Connect Through Skills
+# SkillSwap React Application
 
-A web application that allows users to exchange skills with each other. Users can offer skills they have and request skills they want to learn, creating a community of knowledge exchange.
+A modern React-based skill-sharing platform that connects people through knowledge exchange.
+
+## Project Structure
+
+```
+skillswap-react/
+├── backend/                    # Flask API backend
+│   ├── app.py                 # Main Flask application
+│   ├── requirements.txt       # Python dependencies
+│   └── uploads/              # File uploads directory
+├── frontend/                  # React frontend
+│   ├── public/               # Static assets
+│   ├── src/
+│   │   ├── components/       # Reusable React components
+│   │   │   ├── Navbar.js
+│   │   │   ├── Footer.js
+│   │   │   └── Chat.js
+│   │   ├── contexts/         # React contexts
+│   │   │   ├── AuthContext.js
+│   │   │   └── NotificationContext.js
+│   │   ├── pages/           # Page components
+│   │   │   ├── Home.js
+│   │   │   ├── Login.js
+│   │   │   ├── Register.js
+│   │   │   ├── Dashboard.js
+│   │   │   ├── Profile.js
+│   │   │   ├── Search.js
+│   │   │   ├── ViewProfile.js
+│   │   │   ├── Notifications.js
+│   │   │   └── AdminDashboard.js
+│   │   ├── App.js           # Main App component
+│   │   ├── App.css          # Global styles
+│   │   └── index.js         # Entry point
+│   ├── package.json         # Node.js dependencies
+│   └── package-lock.json
+└── README.md               # This file
+```
 
 ## Features
 
 ### Core Functionality
-- **User Registration & Authentication**: Secure login system with user profiles
-- **Skill Management**: Add, edit, and manage offered and wanted skills
-- **Skill Matching**: Find users with skills you want to learn
+- **User Authentication**: Secure login/register with JWT tokens
+- **Skill Management**: Add, edit, and manage offered/wanted skills
+- **Skill Search**: Find and filter skills by various criteria
 - **Swap Requests**: Request skill exchanges with other users
-- **Rating System**: Rate and review completed skill swaps
-- **User Profiles**: Detailed profiles with skills, ratings, and availability
+- **User Profiles**: Comprehensive user profiles with ratings
+- **Real-time Chat**: Communication between users
+- **Notifications**: System notifications and alerts
+- **Admin Panel**: Administrative controls and moderation
 
-### New Chat System (WhatsApp-like)
-- **Real-time Messaging**: Direct chat with any registered user
-- **Conversation Management**: View and manage all conversations
-- **Admin Messaging**: Admins can message any user directly
-- **Notifications**: View system notifications and announcements
-- **Drag & Drop**: Draggable chat window that can be positioned anywhere
-- **Responsive Design**: Works on both desktop and mobile devices
-- **Quick Message Access**: Send message buttons on user profiles and homepage listings
+### Technical Features
+- **Modern React**: Built with React 18+ and functional components
+- **Responsive Design**: Mobile-first responsive UI with Bootstrap 5
+- **State Management**: Context API for global state management
+- **Routing**: React Router for client-side navigation
+- **HTTP Client**: Axios for API communication
+- **Authentication**: JWT-based authentication with automatic token refresh
+- **Error Handling**: Comprehensive error handling and user feedback
+- **Loading States**: Proper loading indicators throughout the app
 
-### Admin Features
-- **User Management**: Ban/unban users, place under supervision
-- **Skill Moderation**: Approve or reject user-submitted skills
-- **System Messages**: Send announcements to all users
-- **Quick Messages**: Send targeted messages to specific users
-- **Reports**: Generate CSV reports for user activity, feedback, and swap statistics
+## Technology Stack
 
-## Installation
+### Frontend
+- **React 18+**: Modern React with hooks and functional components
+- **React Router**: Client-side routing
+- **Bootstrap 5**: Responsive UI framework
+- **Font Awesome**: Icon library
+- **Axios**: HTTP client for API requests
+- **Context API**: State management
 
-1. **Clone the repository**
+### Backend
+- **Flask**: Python web framework
+- **Flask-JWT-Extended**: JWT authentication
+- **Flask-CORS**: Cross-origin resource sharing
+- **SQLite**: Database
+- **Werkzeug**: Password hashing and file handling
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v16 or higher)
+- Python (v3.8 or higher)
+- npm or yarn
+
+### Quick Start (Recommended)
+
+**Windows Users:**
 ```bash
-   git clone <repository-url>
-cd skillswap
+# Double-click start.bat or run in terminal:
+start.bat
 ```
 
-2. **Install Python dependencies**
+**Mac/Linux Users:**
 ```bash
-pip install -r requirements.txt
+chmod +x start.sh
+./start.sh
 ```
 
-3. **Run the application**
+### Manual Setup
+
+#### Backend Setup
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the Flask development server:
+   ```bash
+   python app.py
+   ```
+
+The backend API will be available at `http://localhost:5000`
+
+#### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install Node.js dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the React development server:
+   ```bash
+   npm start
+   ```
+
+The frontend will be available at `http://localhost:3000`
+
+### Testing the Setup
+
+Run the backend test script:
 ```bash
-python skill_swap_app.py
+python test_backend.py
 ```
 
-4. **Access the application**
-   - Open your browser and go to `http://localhost:5000`
-   - Default admin credentials: `admin@skillswap.com` / `admin123`
+If you encounter issues, see `TROUBLESHOOTING.md` for detailed solutions.
 
-## Database Setup
-
-The application automatically creates the SQLite database with the following tables:
-- `users`: User accounts and profiles
-- `skills`: Offered and wanted skills
-- `swap_requests`: Skill exchange requests
-- `ratings`: User ratings and feedback
-- `messages`: System announcements
-- `notifications`: User notifications
-- `chat_conversations`: Chat conversations between users
-- `chat_messages`: Individual chat messages
-
-## Chat System Usage
-
-### For Regular Users
-1. **Access Chat**: Click the "Chat" button in the navigation bar
-2. **Start Conversations**: 
-   - Go to the "Users" tab to see all available users
-   - Click on a user to start a new conversation
-3. **View Conversations**: 
-   - Go to the "Conversations" tab to see all your chats
-   - Click on a conversation to view messages
-4. **Send Messages**: Type your message and press Enter or click the send button
-
-### For Admins
-1. **Admin Tab**: Access the "Admin" tab in the chat interface
-2. **Send Messages**: 
-   - Select a user from the dropdown
-   - Type your message
-   - Click "Send" to deliver the message
-3. **System Messages**: Messages sent as admin appear as system messages
-
-### Chat Features
-- **Draggable**: Click and drag the chat header to move the window
-- **Minimizable**: Click the minimize button to collapse the chat
-- **Responsive**: Automatically adapts to mobile devices
-- **Real-time Updates**: Polls for new messages every 5 seconds
-- **Unread Counts**: Shows unread message badges in the navigation
-
-### Quick Message Access
-- **User Profiles**: Click "Send Message" button on any user's profile to instantly open chat
-- **Homepage Listings**: Send message buttons on user cards for quick access
-- **Search Results**: Message users directly from skill search results
-- **Automatic Chat Opening**: Chat app opens automatically when clicking send message buttons
-- **User Selection**: Automatically starts conversation with the selected user
-
-## File Structure
-
-```
-skillswap/
-├── skill_swap_app.py          # Main Flask application
-├── requirements.txt            # Python dependencies
-├── skill_swap.db              # SQLite database
-├── static/
-│   ├── css/
-│   │   └── style.css          # Main stylesheet with chat styles
-│   ├── js/
-│   │   └── main.js            # JavaScript with chat functionality
-│   └── uploads/               # User profile photos
-└── templates/
-    ├── base.html              # Base template with chat interface
-    ├── chat.html              # Dedicated chat page
-    └── ...                    # Other templates
-```
+### Default Admin Account
+- **Email**: admin@skillswap.com
+- **Password**: admin123
 
 ## API Endpoints
 
-### Chat Endpoints
-- `GET /chat` - Main chat page
-- `GET /chat/conversation/<id>` - Get conversation messages
-- `POST /chat/send_message` - Send a new message
-- `POST /chat/start_conversation` - Start new conversation
-- `POST /chat/admin_message` - Send admin message (admin only)
-- `GET /chat/unread_count` - Get unread message count
-- `GET /chat/notifications` - Get notifications and announcements
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
 
-## Security Features
+### Users
+- `GET /api/users` - Get all users (with pagination and filters)
+- `GET /api/users/:id` - Get user profile
+- `PUT /api/users/:id` - Update user profile
 
-- **Authentication Required**: All chat features require user login
-- **Admin Verification**: Admin-only features are properly protected
-- **User Validation**: Users can only access conversations they're part of
-- **Input Sanitization**: Messages are properly handled and stored
+### Skills
+- `GET /api/skills` - Get user's skills
+- `POST /api/skills` - Add new skill
+- `PUT /api/skills/:id` - Update skill
+- `DELETE /api/skills/:id` - Delete skill
+- `GET /api/skills/search` - Search skills
 
-## Browser Compatibility
+### Swap Requests
+- `GET /api/swap-requests` - Get user's swap requests
+- `POST /api/swap-requests` - Create swap request
+- `PUT /api/swap-requests/:id` - Update swap request status
 
-- **Modern Browsers**: Chrome, Firefox, Safari, Edge (latest versions)
-- **Mobile Support**: Responsive design for mobile devices
-- **JavaScript Required**: Chat functionality requires JavaScript enabled
+### Notifications
+- `GET /api/notifications` - Get user notifications
+- `PUT /api/notifications/:id/read` - Mark notification as read
+
+## Development
+
+### Code Structure
+- **Components**: Reusable UI components in `/src/components/`
+- **Pages**: Full page components in `/src/pages/`
+- **Contexts**: React contexts for global state in `/src/contexts/`
+- **Styles**: Global CSS in `App.css`, component-specific styles inline
+
+### State Management
+- **AuthContext**: Manages user authentication state
+- **NotificationContext**: Manages toast notifications and alerts
+
+### Styling
+- **Bootstrap 5**: Primary UI framework
+- **Custom CSS**: Additional styling in `App.css`
+- **CSS Variables**: Consistent color scheme and spacing
+
+## Deployment
+
+### Frontend Deployment
+1. Build the production version:
+   ```bash
+   npm run build
+   ```
+
+2. Deploy the `build/` directory to your web server
+
+### Backend Deployment
+1. Set up a production WSGI server (e.g., Gunicorn)
+2. Configure environment variables for production
+3. Set up a production database (PostgreSQL recommended)
+4. Configure reverse proxy (Nginx recommended)
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Add tests if applicable
 5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Support
 
-For support or questions about the chat system, please open an issue in the repository. 
+For support and questions, please open an issue on the GitHub repository.
